@@ -300,6 +300,7 @@ function animate() {
     let speedXMult = config.speedX / 15;
     let charOffsetX = (Date.now() - startTime) * 0.01 * speedXMult;
 
+
     let yPixelOffset = 0;
     let needsClip = config.speedY !== 0 && maskClipPath;
     if (config.speedY !== 0) {
@@ -513,9 +514,7 @@ function generateExportHTML() {
         imgData: imgB64
     }, null, 2);
 
-    return 
-
-`<!DOCTYPE html>
+    return `<!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
