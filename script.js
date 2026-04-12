@@ -1,0 +1,766 @@
+const config = {
+    mask: "ERound", mask2: "GENERATOR", fillText: "", font: "Manrope", layout: "center",
+    intro: "explosion", idle: "wave", mouseFX: "repel",
+    scale: 100, scale2: 80, introSpeed: 100, speedX: 30, speedY: 0, isDark: false,
+    mouseRadius: 100, mouseForce: 100
+};
+
+const themeBtn = document.getElementById('toggleTheme');
+themeBtn.addEventListener('click', () => {
+    const isLightNow = document.body.classList.toggle('light-theme');
+    config.isDark = !isLightNow;
+    themeBtn.textContent = isLightNow ? 'Тёмная тема' : 'Светлая тема';
+});
+
+document.querySelectorAll('.accordion-header').forEach(header => {
+    header.addEventListener('click', () => {
+        header.classList.toggle('active');
+        const content = header.nextElementSibling;
+        content.classList.toggle('open');
+    });
+});
+
+function syncSlider(sliderId, inputId) {
+    const slider = document.getElementById(sliderId);
+    const input = document.getElementById(inputId);
+    if (!slider || !input) return;
+    slider.addEventListener('input', e => { input.value = e.target.value; updateConfig(); });
+    input.addEventListener('input', e => { slider.value = e.target.value; updateConfig(); });
+}
+syncSlider('cfgScale', 'cfgScaleVal');
+syncSlider('cfgScale2', 'cfgScaleVal2');
+syncSlider('cfgIntroSpeed', 'cfgIntroSpeedVal');
+syncSlider('cfgSpeedX', 'cfgSpeedXVal');
+syncSlider('cfgSpeedY', 'cfgSpeedYVal');
+syncSlider('cfgMouseRadius', 'cfgMouseRadiusVal');
+syncSlider('cfgMouseForce', 'cfgMouseForceVal');
+
+const inputs = {
+    mask: document.getElementById('cfgMaskText'), mask2: document.getElementById('cfgMaskText2'),
+    fillText: document.getElementById('cfgFillText'), font: document.getElementById('cfgFont'),
+    layout: document.getElementById('cfgLayout'), intro: document.getElementById('cfgIntro'),
+    idle: document.getElementById('cfgIdle'), mouseFX: document.getElementById('cfgMouse')
+};
+
+function updateConfig() {
+    const prevIntro = config.intro;
+
+    if (inputs.mask) config.mask = inputs.mask.value || " ";
+    if (inputs.mask2) config.mask2 = inputs.mask2.value || " ";
+    if (inputs.fillText) config.fillText = inputs.fillText.value;
+    if (inputs.font) config.font = inputs.font.value;
+    if (inputs.layout) config.layout = inputs.layout.value;
+    if (inputs.intro) config.intro = inputs.intro.value;
+    if (inputs.idle) config.idle = inputs.idle.value;
+    if (inputs.mouseFX) config.mouseFX = inputs.mouseFX.value;
+
+    config.scale = Number(document.getElementById('cfgScale').value);
+    config.scale2 = Number(document.getElementById('cfgScale2').value);
+    config.introSpeed = Number(document.getElementById('cfgIntroSpeed').value);
+    config.speedX = Number(document.getElementById('cfgSpeedX').value);
+    config.speedY = Number(document.getElementById('cfgSpeedY').value);
+    config.mouseRadius = Number(document.getElementById('cfgMouseRadius').value);
+    config.mouseForce = Number(document.getElementById('cfgMouseForce').value);
+
+    const groupWord2 = document.getElementById('groupWord2');
+    if (groupWord2) {
+        if (config.layout === 'center2') groupWord2.classList.add('visible');
+        else groupWord2.classList.remove('visible');
+    }
+
+    const groupImage = document.getElementById('groupImage');
+    if (groupImage) {
+        if (config.layout === 'image') groupImage.classList.add('visible');
+        else groupImage.classList.remove('visible');
+    }
+
+    if (typeof rebuildOnTheFly === 'function') rebuildOnTheFly();
+
+    if (prevIntro !== config.intro) {
+        introProgress = 0;
+        startTime = Date.now();
+    }
+}
+
+for (const key in inputs) {
+    if(inputs[key]) {
+        inputs[key].addEventListener('input', updateConfig);
+        inputs[key].addEventListener('change', updateConfig);
+    }
+}
+
+let uploadedImage = null;
+document.getElementById('cfgImage').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const img = new Image();
+    img.onload = () => {
+        uploadedImage = img;
+        if (config.layout === 'image') rebuildOnTheFly();
+    };
+    img.src = URL.createObjectURL(file);
+});
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d', { willReadFrequently: true });
+let width, height;
+let maskIntervals = [];
+let maskClipPath = null;
+let charWidths = {};
+const lineHeight = 16;
+let startTime = Date.now();
+let introProgress = 0;
+
+let mouse = { x: -1000, y: -1000, radius: 100 };
+canvas.addEventListener('mousemove', e => {
+    const rect = canvas.getBoundingClientRect();
+    mouse.x = e.clientX - rect.left;
+    mouse.y = e.clientY - rect.top;
+});
+canvas.addEventListener('mouseleave', () => { mouse.x = -1000; mouse.y = -1000; });
+
+function initCharCache() {
+    ctx.font = `900 14px '${config.font}', sans-serif`;
+    charWidths = {};
+    const text = config.fillText || "ERound";
+    const uniqueChars = Array.from(new Set(text + " "));
+    for (const char of uniqueChars) {
+        charWidths[char] = ctx.measureText(char).width;
+    }
+}
+
+function rebuildOnTheFly() {
+    initCharCache();
+    createMask();
+}
+
+function resizeCanvas() {
+    const preview = document.getElementById('preview');
+    width = preview.clientWidth;
+    height = preview.clientHeight;
+    canvas.width = width;
+    canvas.height = height;
+    rebuildOnTheFly();
+}
+window.addEventListener('resize', resizeCanvas);
+
+function createMask() {
+    if (!width || !height) return;
+    maskIntervals = [];
+
+    const offCtx = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+    offCtx.canvas.width = width;
+    offCtx.canvas.height = height;
+    offCtx.fillStyle = '#000';
+
+    const paddingX = 40; const paddingY = 40;
+    const maxUsableWidth = width - (paddingX * 2);
+    const maxUsableHeight = height - (paddingY * 2);
+
+    let maxAllowedScale = 200;
+    let maxAllowedScale2 = 200;
+
+    if (config.layout === 'center' || config.layout === 'center2') {
+        offCtx.font = `900 300px '${config.font}', sans-serif`;
+        let metrics = offCtx.measureText(config.mask);
+        if (metrics.width > 0) maxAllowedScale = Math.floor((maxUsableWidth / metrics.width) * 100);
+        maxAllowedScale = Math.min(Math.max(maxAllowedScale, 10), 500);
+
+        if (config.layout === 'center2') {
+            let metrics2 = offCtx.measureText(config.mask2);
+            if (metrics2.width > 0) maxAllowedScale2 = Math.floor((maxUsableWidth / metrics2.width) * 100);
+            maxAllowedScale2 = Math.min(Math.max(maxAllowedScale2, 10), 500);
+        }
+    }
+    else if (config.layout === 'col-single') maxAllowedScale = 142;
+    else if (config.layout === 'col-narrow') maxAllowedScale = 117;
+    else if (config.layout === 'col-indep') maxAllowedScale = 117;
+    else if (config.layout === 'image') maxAllowedScale = 200;
+
+    const scaleSlider = document.getElementById('cfgScale');
+    if (scaleSlider && Number(scaleSlider.max) !== maxAllowedScale) {
+        scaleSlider.max = maxAllowedScale;
+        if (config.scale > maxAllowedScale) {
+            config.scale = maxAllowedScale; scaleSlider.value = maxAllowedScale; document.getElementById('cfgScaleVal').value = maxAllowedScale;
+        }
+    }
+    const scaleSlider2 = document.getElementById('cfgScale2');
+    if (scaleSlider2 && Number(scaleSlider2.max) !== maxAllowedScale2) {
+        scaleSlider2.max = maxAllowedScale2;
+        if (config.scale2 > maxAllowedScale2) {
+            config.scale2 = maxAllowedScale2; scaleSlider2.value = maxAllowedScale2; document.getElementById('cfgScaleVal2').value = maxAllowedScale2;
+        }
+    }
+
+    const scaleMult = config.scale / 100;
+    const scaleMult2 = config.scale2 / 100;
+
+    if (config.layout === 'center') {
+        offCtx.textAlign = 'center'; offCtx.textBaseline = 'middle';
+        let fontSize = 300 * scaleMult; offCtx.font = `900 ${fontSize}px '${config.font}', sans-serif`;
+        let metrics = offCtx.measureText(config.mask);
+        if (metrics.width > maxUsableWidth) { fontSize = fontSize * (maxUsableWidth / metrics.width); offCtx.font = `900 ${fontSize}px '${config.font}', sans-serif`; }
+        offCtx.fillText(config.mask, width / 2, height / 2);
+    }
+    else if (config.layout === 'center2') {
+        offCtx.textAlign = 'center'; offCtx.textBaseline = 'middle';
+        let font1 = 300 * scaleMult; offCtx.font = `900 ${font1}px '${config.font}', sans-serif`;
+        let met1 = offCtx.measureText(config.mask);
+        if (met1.width > maxUsableWidth) font1 = font1 * (maxUsableWidth / met1.width);
+
+        let font2 = 300 * scaleMult2; offCtx.font = `900 ${font2}px '${config.font}', sans-serif`;
+        let met2 = offCtx.measureText(config.mask2);
+        if (met2.width > maxUsableWidth) font2 = font2 * (maxUsableWidth / met2.width);
+
+        let gap = 20; let startY = (height / 2) - (font1 + font2 + gap) / 2;
+        offCtx.font = `900 ${font1}px '${config.font}', sans-serif`; offCtx.fillText(config.mask, width / 2, startY + font1 / 2);
+        offCtx.font = `900 ${font2}px '${config.font}', sans-serif`; offCtx.fillText(config.mask2, width / 2, startY + font1 + gap + font2 / 2);
+    }
+    else if (config.layout === 'col-single') {
+        let targetWidth = Math.min((maxUsableWidth * 0.7) * scaleMult, maxUsableWidth);
+        let colHeight = Math.min((height * 0.75) * scaleMult, maxUsableHeight);
+        offCtx.fillRect((width - targetWidth) / 2, (height - colHeight) / 2, targetWidth, colHeight);
+    }
+    else if (config.layout === 'col-narrow') {
+        let targetWidth = Math.min((maxUsableWidth * 0.85) * scaleMult, maxUsableWidth);
+        let colHeight = Math.min((height * 0.75) * scaleMult, maxUsableHeight);
+        let colWidth = Math.max((targetWidth - 60) / 3, 10);
+        offCtx.fillRect((width - colWidth) / 2, (height - colHeight) / 2, colWidth, colHeight);
+    }
+    else if (config.layout === 'col-indep') {
+        let targetWidth = Math.min((maxUsableWidth * 0.85) * scaleMult, maxUsableWidth);
+        let colHeight = Math.min((height * 0.75) * scaleMult, maxUsableHeight);
+        let colWidth = Math.max((targetWidth - 60) / 3, 10);
+        const startX = (width - ((colWidth * 3) + 60)) / 2;
+        const startY = (height - colHeight) / 2;
+        offCtx.fillRect(startX, startY, colWidth, colHeight);
+        offCtx.fillRect(startX + colWidth + 30, startY, colWidth, colHeight);
+        offCtx.fillRect(startX + (colWidth + 30) * 2, startY, colWidth, colHeight);
+    }
+    else if (config.layout === 'image' && uploadedImage) {
+        const imgAspect = uploadedImage.width / uploadedImage.height;
+        const canvasAspect = maxUsableWidth / maxUsableHeight;
+        let drawW, drawH;
+        if (imgAspect > canvasAspect) { drawW = maxUsableWidth * scaleMult; drawH = drawW / imgAspect; }
+        else { drawH = maxUsableHeight * scaleMult; drawW = drawH * imgAspect; }
+        if (drawW > maxUsableWidth) { drawW = maxUsableWidth; drawH = drawW / imgAspect; }
+        if (drawH > maxUsableHeight) { drawH = maxUsableHeight; drawW = drawH * imgAspect; }
+        const drawX = (width - drawW) / 2;
+        const drawY = (height - drawH) / 2;
+        offCtx.drawImage(uploadedImage, drawX, drawY, drawW, drawH);
+        const iData = offCtx.getImageData(0, 0, width, height);
+        const px = iData.data;
+        for (let p = 0; p < px.length; p += 4) {
+            const lum = px[p] * 0.299 + px[p + 1] * 0.587 + px[p + 2] * 0.114;
+            px[p + 3] = px[p + 3] < 250 ? px[p + 3] : (lum < 128 ? 255 : 0);
+        }
+        offCtx.putImageData(iData, 0, 0);
+    }
+
+    const imgData = offCtx.getImageData(0, 0, width, height).data;
+    for (let y = 0; y < height; y += lineHeight) {
+        let rowIntervals = []; let inText = false; let startX = 0;
+        for (let x = 0; x < width; x += 4) {
+            if (imgData[(y * width + x) * 4 + 3] > 128) {
+                if (!inText) { inText = true; startX = x; }
+            } else if (inText) {
+                inText = false; rowIntervals.push({ start: startX, end: x });
+            }
+        }
+        if (inText) rowIntervals.push({ start: startX, end: width });
+        if (rowIntervals.length > 0) maskIntervals.push({ y, intervals: rowIntervals });
+    }
+
+    maskClipPath = new Path2D();
+    for (const row of maskIntervals) {
+        for (const iv of row.intervals) {
+            maskClipPath.rect(iv.start, row.y, iv.end - iv.start, lineHeight);
+        }
+    }
+}
+
+function animate() {
+    ctx.clearRect(0, 0, width, height);
+
+    let introSpeedMult = config.introSpeed / 100;
+    if (config.intro === 'none') {
+        introProgress = 1;
+    } else if (introProgress < 1) {
+        introProgress += 0.008 * introSpeedMult;
+        if (introProgress >= 1) introProgress = 1;
+    }
+
+    ctx.font = `900 14px '${config.font}', sans-serif`;
+    ctx.textBaseline = 'top';
+    ctx.globalAlpha = (config.intro === 'fade') ? introProgress : 1;
+
+    const ease = 1 - Math.pow(1 - introProgress, 3);
+    const time = Date.now() * 0.0015;
+
+    let speedXMult = config.speedX / 15;
+    let charOffsetX = (Date.now() - startTime) * 0.01 * speedXMult;
+
+    let yPixelOffset = 0;
+    let needsClip = config.speedY !== 0 && maskClipPath;
+    if (config.speedY !== 0) {
+        let speedYMult = config.speedY / 15;
+        yPixelOffset = (Date.now() - startTime) * 0.15 * speedYMult;
+    }
+
+    mouse.radius = config.mouseRadius;
+
+    if (needsClip) {
+        ctx.save();
+        ctx.clip(maskClipPath);
+    }
+
+    let patternH = maskIntervals.length > 1
+        ? maskIntervals[maskIntervals.length - 1].y - maskIntervals[0].y + lineHeight
+        : height;
+    if (patternH <= 0) patternH = height;
+
+    const copies = needsClip ? [-1, 0, 1] : [0];
+
+    for (const copy of copies) {
+        let yOff = needsClip ? (yPixelOffset % patternH) + copy * patternH : 0;
+
+        for (let i = 0; i < maskIntervals.length; i++) {
+            const row = maskIntervals[i];
+            let renderY = row.y + yOff;
+
+            if (renderY < -lineHeight || renderY > height + lineHeight) continue;
+
+            let rowCharIndex = Math.floor(charOffsetX + (i * 23));
+
+            for (let j = 0; j < row.intervals.length; j++) {
+                const interval = row.intervals[j];
+                drawTextSegment(interval.start, interval.end, renderY, ease, time, rowCharIndex, i);
+                rowCharIndex += Math.floor((interval.end - interval.start) / 8);
+            }
+        }
+    }
+
+    if (needsClip) ctx.restore();
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(animate);
+}
+
+function drawTextSegment(startX, endX, targetY, ease, time, startIndex, rowIndex) {
+    ctx.fillStyle = config.isDark ? '#eeeeee' : '#111111';
+
+    let currentX = startX;
+    let charIndex = startIndex;
+    const text = config.fillText || "ERound";
+    const textLen = text.length;
+
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const forceMult = config.mouseForce / 100;
+
+    while (currentX < endX) {
+        const safeIndex = ((charIndex % textLen) + textLen) % textLen;
+        const char = text[safeIndex];
+        const charW = charWidths[char] || 8;
+
+        if (currentX + charW > endX) break;
+
+        if (char !== ' ') {
+            const seed = rowIndex * 1000 + Math.abs(charIndex);
+
+            let drawX = currentX;
+            let drawY = targetY;
+
+            if (config.intro === 'explosion') {
+                const noiseX = Math.sin(seed * 12.9898) * 43758.5453;
+                const randDirX = (noiseX - Math.floor(noiseX) - 0.5) * 2.5;
+                const noiseY = Math.sin(seed * 78.233) * 23421.134;
+                const randDirY = (noiseY - Math.floor(noiseY)) * -1.2;
+                const explosionSpread = 800;
+                const controlX = centerX + randDirX * explosionSpread;
+                const controlY = centerY + randDirY * explosionSpread - 100;
+                const t = ease; const t1 = 1 - t;
+                drawX = t1 * t1 * centerX + 2 * t1 * t * controlX + t * t * currentX;
+                drawY = t1 * t1 * centerY + 2 * t1 * t * controlY + t * t * targetY;
+            }
+            else if (config.intro === 'tape') {
+                const t = ease;
+                drawX = currentX + (1 - t) * (-width);
+                drawY = targetY + Math.sin(currentX * 0.01 + t * 10) * (1 - t) * 200;
+            }
+            else if (config.intro === 'drop') {
+                drawY = targetY - Math.pow(1 - ease, 2) * (height + 200);
+            }
+            else if (config.intro === 'spin') {
+                const dx = currentX - centerX;
+                const dy = targetY - centerY;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                const angle = Math.atan2(dy, dx) + (1 - ease) * 10;
+                const radius = dist + Math.pow(1 - ease, 3) * 1000;
+                drawX = centerX + Math.cos(angle) * radius;
+                drawY = centerY + Math.sin(angle) * radius;
+            }
+
+            let idleX = 0, idleY = 0;
+            if (config.idle === 'wave') {
+                idleX = Math.cos(time + currentX * 0.01) * 1.5 * ease;
+                idleY = Math.sin(time + currentX * 0.015) * 3 * ease;
+            } else if (config.idle === 'pulse') {
+                const pdx = currentX - width / 2;
+                const pdy = targetY - height / 2;
+                const pdist = Math.sqrt(pdx * pdx + pdy * pdy);
+                const pulseWave = Math.sin(time * 3 - pdist * 0.01) * 3 * ease;
+                idleX = pdist > 0 ? (pdx / pdist) * pulseWave : 0;
+                idleY = pdist > 0 ? (pdy / pdist) * pulseWave : 0;
+            } else if (config.idle === 'glitch') {
+                if (Math.random() > 0.95) { idleX = (Math.random() - 0.5) * 10; idleY = (Math.random() - 0.5) * 10; }
+            } else if (config.idle === 'lens') {
+                const lensX = width / 2 + Math.cos(time * 0.4) * width * 0.25;
+                const lensY = height / 2 + Math.sin(time * 0.6) * height * 0.25;
+                const lensR = 120;
+                const ldx = currentX - lensX;
+                const ldy = targetY - lensY;
+                const ldist = Math.sqrt(ldx * ldx + ldy * ldy);
+                if (ldist < lensR && ldist > 0) {
+                    const force = Math.pow(1 - ldist / lensR, 2) * 12 * ease;
+                    idleX = (ldx / ldist) * force;
+                    idleY = (ldy / ldist) * force;
+                }
+            } else if (config.idle === 'liquid') {
+                const w1 = Math.sin(time * 1.5 + currentX * 0.008 + targetY * 0.006) * 4;
+                const w2 = Math.cos(time * 0.7 + currentX * 0.012 - targetY * 0.008) * 3;
+                const w3 = Math.sin(time * 2.3 - currentX * 0.005 + targetY * 0.01) * 2;
+                idleX = (w1 + w2 * 0.5) * ease;
+                idleY = (w2 + w3) * ease;
+            }
+
+            let mouseX = 0, mouseY = 0;
+            const actualX = drawX + idleX;
+            const actualY = drawY + idleY;
+            const dx = actualX - mouse.x;
+            const dy = actualY - mouse.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            let renderChar = true;
+
+            if (dist < mouse.radius && dist > 0.1) {
+                const force = Math.pow((mouse.radius - dist) / mouse.radius, 2);
+                if (config.mouseFX === 'repel') {
+                    mouseX = (dx / dist) * force * 50 * forceMult; mouseY = (dy / dist) * force * 50 * forceMult;
+                } else if (config.mouseFX === 'gravity') {
+                    mouseX = -(dx / dist) * force * 30 * forceMult; mouseY = -(dy / dist) * force * 30 * forceMult;
+                } else if (config.mouseFX === 'vortex') {
+                    const angle = Math.atan2(dy, dx) + Math.PI / 2;
+                    mouseX = Math.cos(angle) * force * 50 * forceMult; mouseY = Math.sin(angle) * force * 50 * forceMult;
+                }
+            }
+
+            if (config.mouseFX === 'flashlight' && dist > mouse.radius) renderChar = false;
+
+            if (renderChar) ctx.fillText(char, actualX + mouseX, actualY + mouseY);
+        }
+        currentX += charW;
+        charIndex++;
+    }
+}
+
+const exportModal = document.getElementById('exportModal');
+const exportCode = document.getElementById('exportCode');
+
+document.getElementById('generateBtn').addEventListener('click', () => {
+    exportCode.value = generateExportHTML();
+    exportModal.classList.add('active');
+});
+
+document.getElementById('modalClose').addEventListener('click', () => exportModal.classList.remove('active'));
+exportModal.addEventListener('click', e => { if (e.target === exportModal) exportModal.classList.remove('active'); });
+
+document.getElementById('copyCodeBtn').addEventListener('click', () => {
+    exportCode.select();
+    navigator.clipboard.writeText(exportCode.value);
+    const btn = document.getElementById('copyCodeBtn');
+    btn.textContent = 'Скопировано!';
+    setTimeout(() => btn.textContent = 'Скопировать код', 1500);
+});
+
+document.getElementById('downloadHtmlBtn').addEventListener('click', () => {
+    const blob = new Blob([exportCode.value], { type: 'text/html;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'pretext-effect.html';
+    a.click();
+    URL.revokeObjectURL(a.href);
+});
+
+function getImageBase64() {
+    if (!uploadedImage) return null;
+    const c = document.createElement('canvas');
+    c.width = uploadedImage.width;
+    c.height = uploadedImage.height;
+    c.getContext('2d').drawImage(uploadedImage, 0, 0);
+    return c.toDataURL('image/png');
+}
+
+function generateExportHTML() {
+    const bg = config.isDark ? '#111' : '#ffffff';
+    const fg = config.isDark ? '#eeeeee' : '#111111';
+    const imgB64 = config.layout === 'image' ? getImageBase64() : null;
+    const cfgStr = JSON.stringify({
+        mask: config.mask, mask2: config.mask2, fillText: config.fillText || 'ERound',
+        font: config.font, layout: config.layout,
+        intro: config.intro, idle: config.idle, mouseFX: config.mouseFX,
+        scale: config.scale, scale2: config.scale2,
+        introSpeed: config.introSpeed, speedX: config.speedX, speedY: config.speedY,
+        isDark: config.isDark, mouseRadius: config.mouseRadius, mouseForce: config.mouseForce,
+        imgData: imgB64
+    }, null, 2);
+
+    return 
+
+`<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PreText Effect</title>
+<link href="https://fonts.googleapis.com/css2?family=${config.font}:wght@900&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: ${bg}; overflow: hidden; }
+canvas { display: block; width: 100vw; height: 100vh; }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<script>
+/* PreText Engine — FX Generator Export */
+var cfg = ${cfgStr};
+
+var canvas = document.getElementById("canvas");
+var ctx = canvas.getContext("2d", { willReadFrequently: true });
+var W, H, maskI = [], clipP = null, cW = {}, LH = 16;
+var startT = Date.now(), introP = 0;
+var mouse = { x: -1000, y: -1000, radius: cfg.mouseRadius };
+
+canvas.addEventListener("mousemove", function(e) {
+    var r = canvas.getBoundingClientRect();
+    mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top;
+});
+canvas.addEventListener("mouseleave", function() { mouse.x = -1000; mouse.y = -1000; });
+
+function initCC() {
+    ctx.font = "900 14px '" + cfg.font + "', sans-serif";
+    cW = {};
+    var t = cfg.fillText || "ERound";
+    var chars = Array.from(new Set(t + " "));
+    for (var i = 0; i < chars.length; i++) cW[chars[i]] = ctx.measureText(chars[i]).width;
+}
+
+var loadedImg = null;
+function loadImg(cb) {
+    if (!cfg.imgData) { cb(); return; }
+    loadedImg = new Image();
+    loadedImg.onload = cb;
+    loadedImg.src = cfg.imgData;
+}
+
+function resize() {
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = W; canvas.height = H;
+    initCC(); createMask();
+}
+window.addEventListener("resize", resize);
+
+function createMask() {
+    if (!W || !H) return;
+    maskI = [];
+    var o = document.createElement("canvas").getContext("2d", { willReadFrequently: true });
+    o.canvas.width = W; o.canvas.height = H; o.fillStyle = "#000";
+    var pX = 40, pY = 40, mW = W - pX * 2, mH = H - pY * 2;
+    var s = cfg.scale / 100, s2 = cfg.scale2 / 100;
+
+    if (cfg.layout === "center") {
+        o.textAlign = "center"; o.textBaseline = "middle";
+        var fs = 300 * s; o.font = "900 " + fs + "px '" + cfg.font + "', sans-serif";
+        var m = o.measureText(cfg.mask);
+        if (m.width > mW) { fs = fs * (mW / m.width); o.font = "900 " + fs + "px '" + cfg.font + "', sans-serif"; }
+        o.fillText(cfg.mask, W / 2, H / 2);
+    } else if (cfg.layout === "center2") {
+        o.textAlign = "center"; o.textBaseline = "middle";
+        var f1 = 300 * s; o.font = "900 " + f1 + "px '" + cfg.font + "', sans-serif";
+        var m1 = o.measureText(cfg.mask); if (m1.width > mW) f1 = f1 * (mW / m1.width);
+        var f2 = 300 * s2; o.font = "900 " + f2 + "px '" + cfg.font + "', sans-serif";
+        var m2 = o.measureText(cfg.mask2); if (m2.width > mW) f2 = f2 * (mW / m2.width);
+        var gap = 20, sY = (H / 2) - (f1 + f2 + gap) / 2;
+        o.font = "900 " + f1 + "px '" + cfg.font + "', sans-serif"; o.fillText(cfg.mask, W / 2, sY + f1 / 2);
+        o.font = "900 " + f2 + "px '" + cfg.font + "', sans-serif"; o.fillText(cfg.mask2, W / 2, sY + f1 + gap + f2 / 2);
+    } else if (cfg.layout === "col-single") {
+        var tw = Math.min((mW * 0.7) * s, mW), ch = Math.min((H * 0.75) * s, mH);
+        o.fillRect((W - tw) / 2, (H - ch) / 2, tw, ch);
+    } else if (cfg.layout === "col-narrow") {
+        var tw = Math.min((mW * 0.85) * s, mW), ch = Math.min((H * 0.75) * s, mH);
+        var cw = Math.max((tw - 60) / 3, 10);
+        o.fillRect((W - cw) / 2, (H - ch) / 2, cw, ch);
+    } else if (cfg.layout === "col-indep") {
+        var tw = Math.min((mW * 0.85) * s, mW), ch = Math.min((H * 0.75) * s, mH);
+        var cw = Math.max((tw - 60) / 3, 10);
+        var sx = (W - ((cw * 3) + 60)) / 2, sy = (H - ch) / 2;
+        o.fillRect(sx, sy, cw, ch); o.fillRect(sx + cw + 30, sy, cw, ch); o.fillRect(sx + (cw + 30) * 2, sy, cw, ch);
+    } else if (cfg.layout === "image" && loadedImg) {
+        var iA = loadedImg.width / loadedImg.height, cA = mW / mH;
+        var dW, dH;
+        if (iA > cA) { dW = mW * s; dH = dW / iA; } else { dH = mH * s; dW = dH * iA; }
+        if (dW > mW) { dW = mW; dH = dW / iA; } if (dH > mH) { dH = mH; dW = dH * iA; }
+        o.drawImage(loadedImg, (W - dW) / 2, (H - dH) / 2, dW, dH);
+        var iD = o.getImageData(0, 0, W, H), px = iD.data;
+        for (var p = 0; p < px.length; p += 4) {
+            var lum = px[p] * 0.299 + px[p+1] * 0.587 + px[p+2] * 0.114;
+            px[p+3] = px[p+3] < 250 ? px[p+3] : (lum < 128 ? 255 : 0);
+        }
+        o.putImageData(iD, 0, 0);
+    }
+
+    var d = o.getImageData(0, 0, W, H).data;
+    for (var y = 0; y < H; y += LH) {
+        var ri = [], inT = false, sX = 0;
+        for (var x = 0; x < W; x += 4) {
+            if (d[(y * W + x) * 4 + 3] > 128) { if (!inT) { inT = true; sX = x; } }
+            else if (inT) { inT = false; ri.push({ start: sX, end: x }); }
+        }
+        if (inT) ri.push({ start: sX, end: W });
+        if (ri.length > 0) maskI.push({ y: y, intervals: ri });
+    }
+
+    clipP = new Path2D();
+    for (var r = 0; r < maskI.length; r++) {
+        for (var iv = 0; iv < maskI[r].intervals.length; iv++) {
+            var intv = maskI[r].intervals[iv];
+            clipP.rect(intv.start, maskI[r].y, intv.end - intv.start, LH);
+        }
+    }
+}
+
+function animate() {
+    ctx.clearRect(0, 0, W, H);
+    var introSM = cfg.introSpeed / 100;
+    if (cfg.intro === "none") introP = 1;
+    else if (introP < 1) { introP += 0.008 * introSM; if (introP >= 1) introP = 1; }
+
+    ctx.font = "900 14px '" + cfg.font + "', sans-serif";
+    ctx.textBaseline = "top";
+    ctx.globalAlpha = (cfg.intro === "fade") ? introP : 1;
+
+    var ease = 1 - Math.pow(1 - introP, 3);
+    var time = Date.now() * 0.0015;
+    var sXM = cfg.speedX / 15;
+    var cOX = (Date.now() - startT) * 0.01 * sXM;
+
+    var yOff = 0, needClip = cfg.speedY !== 0 && clipP;
+    if (cfg.speedY !== 0) yOff = (Date.now() - startT) * 0.15 * (cfg.speedY / 15);
+
+    if (needClip) { ctx.save(); ctx.clip(clipP); }
+
+    var pH = maskI.length > 1 ? maskI[maskI.length - 1].y - maskI[0].y + LH : H;
+    if (pH <= 0) pH = H;
+    var copies = needClip ? [-1, 0, 1] : [0];
+
+    for (var c = 0; c < copies.length; c++) {
+        var yShift = needClip ? (yOff % pH) + copies[c] * pH : 0;
+        for (var i = 0; i < maskI.length; i++) {
+            var row = maskI[i], rY = row.y + yShift;
+            if (rY < -LH || rY > H + LH) continue;
+            var rCI = Math.floor(cOX + (i * 23));
+            for (var j = 0; j < row.intervals.length; j++) {
+                var iv = row.intervals[j];
+                drawSeg(iv.start, iv.end, rY, ease, time, rCI, i);
+                rCI += Math.floor((iv.end - iv.start) / 8);
+            }
+        }
+    }
+
+    if (needClip) ctx.restore();
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(animate);
+}
+
+function drawSeg(sX, eX, tY, ease, time, sIdx, rIdx) {
+    ctx.fillStyle = "${fg}";
+    var cX = sX, cIdx = sIdx;
+    var text = cfg.fillText || "ERound", tL = text.length;
+    var cenX = W / 2, cenY = H / 2;
+    var fM = cfg.mouseForce / 100;
+
+    while (cX < eX) {
+        var si = ((cIdx % tL) + tL) % tL;
+        var ch = text[si], chW = cW[ch] || 8;
+        if (cX + chW > eX) break;
+
+        if (ch !== " ") {
+            var seed = rIdx * 1000 + Math.abs(cIdx);
+            var dX = cX, dY = tY;
+
+            if (cfg.intro === "explosion") {
+                var nX = Math.sin(seed * 12.9898) * 43758.5453, rDX = (nX - Math.floor(nX) - 0.5) * 2.5;
+                var nY = Math.sin(seed * 78.233) * 23421.134, rDY = (nY - Math.floor(nY)) * -1.2;
+                var sp = 800, ctX = cenX + rDX * sp, ctY = cenY + rDY * sp - 100;
+                var t = ease, t1 = 1 - t;
+                dX = t1 * t1 * cenX + 2 * t1 * t * ctX + t * t * cX;
+                dY = t1 * t1 * cenY + 2 * t1 * t * ctY + t * t * tY;
+            } else if (cfg.intro === "tape") {
+                dX = cX + (1 - ease) * (-W); dY = tY + Math.sin(cX * 0.01 + ease * 10) * (1 - ease) * 200;
+            } else if (cfg.intro === "drop") {
+                dY = tY - Math.pow(1 - ease, 2) * (H + 200);
+            } else if (cfg.intro === "spin") {
+                var dx = cX - cenX, dy = tY - cenY, dist = Math.sqrt(dx * dx + dy * dy);
+                var angle = Math.atan2(dy, dx) + (1 - ease) * 10;
+                var radius = dist + Math.pow(1 - ease, 3) * 1000;
+                dX = cenX + Math.cos(angle) * radius; dY = cenY + Math.sin(angle) * radius;
+            }
+
+            var iX = 0, iY = 0;
+            if (cfg.idle === "wave") {
+                iX = Math.cos(time + cX * 0.01) * 1.5 * ease; iY = Math.sin(time + cX * 0.015) * 3 * ease;
+            } else if (cfg.idle === "pulse") {
+                var pdx = cX - W / 2, pdy = tY - H / 2, pd = Math.sqrt(pdx * pdx + pdy * pdy);
+                var pw = Math.sin(time * 3 - pd * 0.01) * 3 * ease;
+                iX = pd > 0 ? (pdx / pd) * pw : 0; iY = pd > 0 ? (pdy / pd) * pw : 0;
+            } else if (cfg.idle === "glitch") {
+                if (Math.random() > 0.95) { iX = (Math.random() - 0.5) * 10; iY = (Math.random() - 0.5) * 10; }
+            } else if (cfg.idle === "lens") {
+                var lX = W / 2 + Math.cos(time * 0.4) * W * 0.25, lY = H / 2 + Math.sin(time * 0.6) * H * 0.25;
+                var lR = 120, ldx = cX - lX, ldy = tY - lY, ld = Math.sqrt(ldx * ldx + ldy * ldy);
+                if (ld < lR && ld > 0) { var f = Math.pow(1 - ld / lR, 2) * 12 * ease; iX = (ldx / ld) * f; iY = (ldy / ld) * f; }
+            } else if (cfg.idle === "liquid") {
+                var w1 = Math.sin(time * 1.5 + cX * 0.008 + tY * 0.006) * 4;
+                var w2 = Math.cos(time * 0.7 + cX * 0.012 - tY * 0.008) * 3;
+                var w3 = Math.sin(time * 2.3 - cX * 0.005 + tY * 0.01) * 2;
+                iX = (w1 + w2 * 0.5) * ease; iY = (w2 + w3) * ease;
+            }
+
+            var mX = 0, mY = 0, aX = dX + iX, aY = dY + iY;
+            var ddx = aX - mouse.x, ddy = aY - mouse.y, dd = Math.sqrt(ddx * ddx + ddy * ddy);
+            var render = true;
+            if (dd < mouse.radius && dd > 0.1) {
+                var force = Math.pow((mouse.radius - dd) / mouse.radius, 2);
+                if (cfg.mouseFX === "repel") { mX = (ddx / dd) * force * 50 * fM; mY = (ddy / dd) * force * 50 * fM; }
+                else if (cfg.mouseFX === "gravity") { mX = -(ddx / dd) * force * 30 * fM; mY = -(ddy / dd) * force * 30 * fM; }
+                else if (cfg.mouseFX === "vortex") { var a = Math.atan2(ddy, ddx) + Math.PI / 2; mX = Math.cos(a) * force * 50 * fM; mY = Math.sin(a) * force * 50 * fM; }
+            }
+            if (cfg.mouseFX === "flashlight" && dd > mouse.radius) render = false;
+            if (render) ctx.fillText(ch, aX + mX, aY + mY);
+        }
+        cX += chW; cIdx++;
+    }
+}
+
+loadImg(function() {
+    document.fonts.ready.then(function() { resize(); animate(); });
+});
+<\/script>
+</body>
+</html>`;
+}
+
+document.fonts.ready.then(() => {
+    updateConfig();
+    resizeCanvas();
+    animate();
+});
