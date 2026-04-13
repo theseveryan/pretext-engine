@@ -1,5 +1,5 @@
 const config = {
-    mask: "ERound", mask2: "GENERATOR", fillText: "", fontMask: "Manrope", fontFill: "Manrope", layout: "center",
+    mask: "SEVERYAN", mask2: "CODE", fillText: "", fontMask: "Manrope", fontFill: "Manrope", layout: "center",
     intro: "explosion", idle: "wave", mouseFX: "repel",
     scale: 100, scale2: 80, introSpeed: 100, speedX: 30, speedY: 0, isDark: false,
     mouseRadius: 100, mouseForce: 100, videoThreshold: 50, objPadding: 15
@@ -201,7 +201,7 @@ canvas.addEventListener('mouseleave', () => { if (!dragObj) { mouse.x = -1000; m
 function initCharCache() {
     ctx.font = `900 14px '${config.fontFill}', sans-serif`;
     charWidths = {};
-    const text = config.fillText || "ERound";
+    const text = config.fillText || "SEVERYAN";
     for (const char of new Set(text + " ")) {
         charWidths[char] = ctx.measureText(char).width;
     }
@@ -518,7 +518,7 @@ function drawTextSegment(startX, endX, targetY, ease, time, startIndex, rowIndex
     ctx.fillStyle = config.isDark ? '#eeeeee' : '#111111';
     let currentX = startX;
     let charIndex = startIndex;
-    const text = config.fillText || "ERound";
+    const text = config.fillText || "SEVERYAN";
     const textLen = text.length;
     const centerX = width / 2;
     const centerY = height / 2;
@@ -661,7 +661,7 @@ function generateExportHTML() {
     }));
 
     const cfgStr = JSON.stringify({
-        mask: config.mask, mask2: config.mask2, fillText: config.fillText || 'ERound',
+        mask: config.mask, mask2: config.mask2, fillText: config.fillText || 'SEVERYAN',
         fontMask: config.fontMask, fontFill: config.fontFill, layout: config.layout,
         intro: config.intro, idle: config.idle, mouseFX: config.mouseFX,
         scale: config.scale, scale2: config.scale2,
@@ -702,7 +702,7 @@ canvas.addEventListener("mouseleave", function() { mouse.x = -1000; mouse.y = -1
 
 function initCC() {
     ctx.font = "900 14px '" + cfg.fontFill + "', sans-serif"; cW = {};
-    var t = cfg.fillText || "ERound", chars = Array.from(new Set(t + " "));
+    var t = cfg.fillText || "SEVERYAN", chars = Array.from(new Set(t + " "));
     for (var i = 0; i < chars.length; i++) cW[chars[i]] = ctx.measureText(chars[i]).width;
 }
 
@@ -882,7 +882,7 @@ function animate() {
 
 function drawSeg(sX, eX, tY, ease, time, sIdx, rIdx) {
     ctx.fillStyle = "${fg}";
-    var cX = sX, cIdx = sIdx, text = cfg.fillText || "ERound", tL = text.length;
+    var cX = sX, cIdx = sIdx, text = cfg.fillText || "SEVERYAN", tL = text.length;
     var cenX = W / 2, cenY = H / 2, fM = cfg.mouseForce / 100;
     while (cX < eX) {
         var si = ((cIdx % tL) + tL) % tL, ch = text[si], chW = cW[ch] || 8;
