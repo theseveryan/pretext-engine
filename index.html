@@ -5,6 +5,7 @@
     <title>FX Generator</title>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@900&family=Montserrat:wght@900&family=Oswald:wght@700&family=Roboto:wght@900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
 </head>
 <body class="light-theme">
     <div id="sidebar">
@@ -45,7 +46,7 @@
                         </div>
                         <div class="control-group">
                             <label>Текст заполнения маски:</label>
-                            <textarea id="cfgFillText" rows="3">Код, который говорит сам за себя..</textarea>
+                            <textarea id="cfgFillText" rows="3">Только чистый и лёгкий код.</textarea>
                         </div>
                         <div class="control-group">
                             <label>Шрифт маски:</label>
@@ -217,25 +218,64 @@
         </div>
 
         <div class="sidebar-footer">
-            <button id="generateBtn">Экспорт кода</button>
+            <button id="exportOpenBtn">Экспорт</button>
         </div>
     </div>
     
     <div id="preview"><canvas id="canvas"></canvas></div>
 
     <div id="exportModal" class="modal-overlay">
-        <div class="modal">
+        <div class="modal modal-export">
             <div class="modal-header">
-                <h3>Экспорт PreText эффекта</h3>
+                <h3>Экспорт</h3>
                 <button class="modal-close" id="modalClose">&times;</button>
             </div>
-            <div class="modal-body">
-                <p class="modal-desc">Ваш эффект готов к использованию. Код полностью автономный и работает без сервера — достаточно открыть .html файл в браузере. Вставьте в свой проект через iframe или скопируйте движок напрямую.</p>
-                <textarea id="exportCode" readonly></textarea>
+            <div class="export-tabs">
+                <button class="export-tab active" data-tab="code">HTML-код</button>
+                <button class="export-tab" data-tab="gif">GIF-анимация</button>
             </div>
-            <div class="modal-footer">
-                <button id="copyCodeBtn">Скопировать код</button>
-                <button id="downloadHtmlBtn">Скачать .HTML файл</button>
+
+            <div class="export-tab-content active" id="tabCode">
+                <div class="modal-body">
+                    <p class="modal-desc">Код полностью автономный и работает без сервера — достаточно открыть .html файл в браузере. Вставьте в свой проект через iframe или скопируйте движок напрямую.</p>
+                    <textarea id="exportCode" readonly></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button id="copyCodeBtn">Скопировать код</button>
+                    <button id="downloadHtmlBtn">Скачать .HTML файл</button>
+                </div>
+            </div>
+
+            <div class="export-tab-content" id="tabGif">
+                <div class="modal-body">
+                    <p class="modal-desc">Запишите анимацию эффекта в GIF-файл. Настройте параметры и нажмите кнопку записи.</p>
+                    <div class="gif-settings-grid">
+                        <div class="control-group">
+                            <label>Длительность (сек):</label>
+                            <input type="number" id="gifDuration" value="3" min="1" max="15" step="0.5">
+                        </div>
+                        <div class="control-group">
+                            <label>Кадров в секунду (FPS):</label>
+                            <input type="number" id="gifFps" value="20" min="5" max="30">
+                        </div>
+                        <div class="control-group">
+                            <label>Масштаб:</label>
+                            <select id="gifScale">
+                                <option value="0.5">50%</option>
+                                <option value="1" selected>100%</option>
+                                <option value="1.5">150%</option>
+                                <option value="2">200%</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="gif-progress-area" id="gifProgressArea" style="display:none;">
+                        <div class="gif-progress-bar"><div class="gif-progress-fill" id="gifProgressFill"></div></div>
+                        <p id="gifProgressText">Захват кадров: 0%</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="gifBtn">Записать и скачать .GIF</button>
+                </div>
             </div>
         </div>
     </div>

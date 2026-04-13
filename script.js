@@ -184,6 +184,7 @@ const ctx = canvas.getContext('2d', { willReadFrequently: true });
 let width, height;
 let maskIntervals = [];
 let maskClipPath = null;
+let maskBBoxX1 = 0, maskBBoxX2 = 0;
 let charWidths = {};
 const lineHeight = 16;
 let startTime = Date.now();
@@ -347,9 +348,12 @@ function createMask() {
     }
 
     maskClipPath = new Path2D();
+    maskBBoxX1 = Infinity; maskBBoxX2 = 0;
     for (const row of maskIntervals) {
         for (const iv of row.intervals) {
             maskClipPath.rect(iv.start, row.y, iv.end - iv.start, lineHeight);
+            if (iv.start < maskBBoxX1) maskBBoxX1 = iv.start;
+            if (iv.end > maskBBoxX2) maskBBoxX2 = iv.end;
         }
     }
 }
@@ -490,15 +494,20 @@ function animate() {
                 }
             }
         } else {
+            const isShapeMask = needsClip && (config.layout === 'center' || config.layout === 'center2' || config.layout === 'image');
             for (let i = 0; i < maskIntervals.length; i++) {
                 const row = maskIntervals[i];
                 let renderY = row.y + yOff;
                 if (renderY < -lineHeight || renderY > height + lineHeight) continue;
                 let rowCharIndex = Math.floor(charOffsetX + (i * 23));
-                for (let j = 0; j < row.intervals.length; j++) {
-                    const interval = row.intervals[j];
-                    drawTextSegment(interval.start, interval.end, renderY, ease, time, rowCharIndex, i);
-                    rowCharIndex += Math.floor((interval.end - interval.start) / 8);
+                if (isShapeMask) {
+                    drawTextSegment(maskBBoxX1, maskBBoxX2, renderY, ease, time, rowCharIndex, i);
+                } else {
+                    for (let j = 0; j < row.intervals.length; j++) {
+                        const interval = row.intervals[j];
+                        drawTextSegment(interval.start, interval.end, renderY, ease, time, rowCharIndex, i);
+                        rowCharIndex += Math.floor((interval.end - interval.start) / 8);
+                    }
                 }
             }
         }
@@ -618,13 +627,25 @@ function drawTextSegment(startX, endX, targetY, ease, time, startIndex, rowIndex
 const exportModal = document.getElementById('exportModal');
 const exportCode = document.getElementById('exportCode');
 
-document.getElementById('generateBtn').addEventListener('click', () => {
+// Open modal
+document.getElementById('exportOpenBtn').addEventListener('click', () => {
     exportCode.value = generateExportHTML();
     exportModal.classList.add('active');
 });
 document.getElementById('modalClose').addEventListener('click', () => exportModal.classList.remove('active'));
 exportModal.addEventListener('click', e => { if (e.target === exportModal) exportModal.classList.remove('active'); });
 
+// Tabs
+document.querySelectorAll('.export-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.export-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.export-tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab === 'code' ? 'tabCode' : 'tabGif').classList.add('active');
+    });
+});
+
+// Code export buttons
 document.getElementById('copyCodeBtn').addEventListener('click', () => {
     exportCode.select();
     navigator.clipboard.writeText(exportCode.value);
@@ -640,6 +661,126 @@ document.getElementById('downloadHtmlBtn').addEventListener('click', () => {
     a.download = 'pretext-effect.html';
     a.click();
     URL.revokeObjectURL(a.href);
+});
+
+// === GIF EXPORT ===
+let gifWorkerUrl = null;
+fetch('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js')
+    .then(r => r.text())
+    .then(code => {
+        gifWorkerUrl = URL.createObjectURL(new Blob([code], { type: 'application/javascript' }));
+    })
+    .catch(() => { console.warn('gif.worker.js preload failed, will retry on export'); });
+
+document.getElementById('gifBtn').addEventListener('click', async () => {
+    const gifBtn = document.getElementById('gifBtn');
+    if (gifBtn.disabled) return;
+    gifBtn.disabled = true;
+
+    const progressArea = document.getElementById('gifProgressArea');
+    const progressFill = document.getElementById('gifProgressFill');
+    const progressText = document.getElementById('gifProgressText');
+    progressArea.style.display = 'block';
+    progressFill.style.width = '0%';
+    progressText.textContent = 'Подготовка...';
+
+    // Close modal so canvas is visible for capture
+    exportModal.classList.remove('active');
+
+    if (!gifWorkerUrl) {
+        try {
+            const code = await fetch('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js').then(r => r.text());
+            gifWorkerUrl = URL.createObjectURL(new Blob([code], { type: 'application/javascript' }));
+        } catch (e) {
+            alert('Не удалось загрузить gif.worker.js. Проверьте интернет-соединение.');
+            gifBtn.disabled = false;
+            progressArea.style.display = 'none';
+            return;
+        }
+    }
+
+    const duration = parseFloat(document.getElementById('gifDuration').value) || 3;
+    const fps = parseInt(document.getElementById('gifFps').value) || 20;
+    const scale = parseFloat(document.getElementById('gifScale').value) || 1;
+    const totalFrames = Math.round(duration * fps);
+    const delay = Math.round(1000 / fps);
+
+    const gifW = Math.round(canvas.width * scale);
+    const gifH = Math.round(canvas.height * scale);
+
+    const offCanvas = document.createElement('canvas');
+    offCanvas.width = gifW;
+    offCanvas.height = gifH;
+    const offCtx2 = offCanvas.getContext('2d');
+
+    const frames = [];
+    let framesCaptured = 0;
+
+    // Small delay to let modal close & canvas render
+    await new Promise(r => setTimeout(r, 100));
+
+    function captureFrame() {
+        return new Promise(resolve => {
+            requestAnimationFrame(() => {
+                offCtx2.clearRect(0, 0, gifW, gifH);
+                offCtx2.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, gifW, gifH);
+                frames.push(offCtx2.getImageData(0, 0, gifW, gifH));
+                framesCaptured++;
+                resolve();
+            });
+        });
+    }
+
+    for (let i = 0; i < totalFrames; i++) {
+        await captureFrame();
+        if (i < totalFrames - 1) await new Promise(r => setTimeout(r, delay));
+    }
+
+    // Re-open modal to show encoding progress
+    exportModal.classList.add('active');
+    // Switch to GIF tab
+    document.querySelectorAll('.export-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.export-tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelector('.export-tab[data-tab="gif"]').classList.add('active');
+    document.getElementById('tabGif').classList.add('active');
+
+    progressArea.style.display = 'block';
+    progressText.textContent = 'Кодирование GIF...';
+    progressFill.style.width = '40%';
+
+    const gif = new GIF({
+        workers: navigator.hardwareConcurrency || 4,
+        workerScript: gifWorkerUrl,
+        width: gifW,
+        height: gifH,
+        quality: 5,
+        repeat: 0
+    });
+
+    for (let i = 0; i < frames.length; i++) {
+        gif.addFrame(frames[i], { delay: delay });
+    }
+
+    gif.on('progress', p => {
+        const pct = 40 + Math.round(p * 60);
+        progressFill.style.width = pct + '%';
+        progressText.textContent = `Кодирование: ${Math.round(p * 100)}%`;
+    });
+
+    gif.on('finished', blob => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'pretext-animation.gif';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        gifBtn.disabled = false;
+        frames.length = 0;
+        progressText.textContent = 'Готово! GIF скачан.';
+        progressFill.style.width = '100%';
+        setTimeout(() => { progressArea.style.display = 'none'; }, 2000);
+    });
+
+    gif.render();
 });
 
 function getImageBase64(img) {
@@ -690,7 +831,7 @@ canvas { display: block; width: 100vw; height: 100vh; }
 var cfg = ${cfgStr};
 var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext("2d", { willReadFrequently: true });
-var W, H, maskI = [], clipP = null, cW = {}, LH = 16;
+var W, H, maskI = [], clipP = null, cW = {}, LH = 16, bbX1 = 0, bbX2 = 0;
 var startT = Date.now(), introP = 0;
 var mouse = { x: -1000, y: -1000, radius: cfg.mouseRadius };
 var scObjs = [], objM = null;
@@ -824,9 +965,10 @@ function createMask() {
         if (inT) ri.push({ start: sX, end: W });
         if (ri.length > 0) maskI.push({ y: y, intervals: ri });
     }
-    clipP = new Path2D();
+    clipP = new Path2D(); bbX1 = W; bbX2 = 0;
     for (var r = 0; r < maskI.length; r++) for (var iv = 0; iv < maskI[r].intervals.length; iv++) {
         var intv = maskI[r].intervals[iv]; clipP.rect(intv.start, maskI[r].y, intv.end - intv.start, LH);
+        if (intv.start < bbX1) bbX1 = intv.start; if (intv.end > bbX2) bbX2 = intv.end;
     }
 }
 
@@ -863,13 +1005,18 @@ function animate() {
                 cumCI += Math.floor((iv.end - iv.start) / 8);
             } }
         } else {
+            var isSM = needClip && (cfg.layout === "center" || cfg.layout === "center2" || cfg.layout === "image");
             for (var i = 0; i < maskI.length; i++) {
                 var row = maskI[i], rY = row.y + yS;
                 if (rY < -LH || rY > H + LH) continue;
                 var rCI = Math.floor(cOX + (i * 23));
-                for (var j = 0; j < row.intervals.length; j++) {
-                    var iv = row.intervals[j]; drawSeg(iv.start, iv.end, rY, ease, time, rCI, i);
-                    rCI += Math.floor((iv.end - iv.start) / 8);
+                if (isSM) {
+                    drawSeg(bbX1, bbX2, rY, ease, time, rCI, i);
+                } else {
+                    for (var j = 0; j < row.intervals.length; j++) {
+                        var iv = row.intervals[j]; drawSeg(iv.start, iv.end, rY, ease, time, rCI, i);
+                        rCI += Math.floor((iv.end - iv.start) / 8);
+                    }
                 }
             }
         }
