@@ -48,8 +48,17 @@
                             <textarea id="cfgFillText" rows="3">ERound — искусство вести бизнес через совершенство технологий. Мы превращаем сложные процессы в изящные решения.</textarea>
                         </div>
                         <div class="control-group">
-                            <label>Google Шрифт:</label>
-                            <select id="cfgFont">
+                            <label>Шрифт маски:</label>
+                            <select id="cfgFontMask">
+                                <option value="Manrope">Manrope</option>
+                                <option value="Roboto">Roboto</option>
+                                <option value="Montserrat">Montserrat</option>
+                                <option value="Oswald">Oswald</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>Шрифт заполнения:</label>
+                            <select id="cfgFontFill">
                                 <option value="Manrope">Manrope</option>
                                 <option value="Roboto">Roboto</option>
                                 <option value="Montserrat">Montserrat</option>
@@ -82,6 +91,10 @@
                                     <label>Загрузить видео:</label>
                                     <input type="file" id="cfgVideo" accept="video/*">
                                 </div>
+                            </div>
+                        </div>
+                        <div class="dynamic-group" id="groupThreshold">
+                            <div class="dynamic-inner">
                                 <div class="control-group">
                                     <label>Порог яркости (%):</label>
                                     <div class="slider-row">

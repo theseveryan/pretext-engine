@@ -1,5 +1,5 @@
 const config = {
-    mask: "ERound", mask2: "GENERATOR", fillText: "", font: "Manrope", layout: "center",
+    mask: "ERound", mask2: "GENERATOR", fillText: "", fontMask: "Manrope", fontFill: "Manrope", layout: "center",
     intro: "explosion", idle: "wave", mouseFX: "repel",
     scale: 100, scale2: 80, introSpeed: 100, speedX: 30, speedY: 0, isDark: false,
     mouseRadius: 100, mouseForce: 100, videoThreshold: 50, objPadding: 15
@@ -38,7 +38,7 @@ syncSlider('cfgObjPadding', 'cfgObjPaddingVal');
 
 const inputs = {
     mask: document.getElementById('cfgMaskText'), mask2: document.getElementById('cfgMaskText2'),
-    fillText: document.getElementById('cfgFillText'), font: document.getElementById('cfgFont'),
+    fillText: document.getElementById('cfgFillText'), fontMask: document.getElementById('cfgFontMask'), fontFill: document.getElementById('cfgFontFill'),
     layout: document.getElementById('cfgLayout'), intro: document.getElementById('cfgIntro'),
     idle: document.getElementById('cfgIdle'), mouseFX: document.getElementById('cfgMouse')
 };
@@ -48,7 +48,8 @@ function updateConfig() {
     if (inputs.mask) config.mask = inputs.mask.value || " ";
     if (inputs.mask2) config.mask2 = inputs.mask2.value || " ";
     if (inputs.fillText) config.fillText = inputs.fillText.value;
-    if (inputs.font) config.font = inputs.font.value;
+    if (inputs.fontMask) config.fontMask = inputs.fontMask.value;
+    if (inputs.fontFill) config.fontFill = inputs.fontFill.value;
     if (inputs.layout) config.layout = inputs.layout.value;
     if (inputs.intro) config.intro = inputs.intro.value;
     if (inputs.idle) config.idle = inputs.idle.value;
@@ -70,6 +71,8 @@ function updateConfig() {
     if (groupImage) { groupImage.classList.toggle('visible', config.layout === 'image'); }
     const groupVideo = document.getElementById('groupVideo');
     if (groupVideo) { groupVideo.classList.toggle('visible', config.layout === 'video'); }
+    const groupThreshold = document.getElementById('groupThreshold');
+    if (groupThreshold) { groupThreshold.classList.toggle('visible', config.layout === 'image' || config.layout === 'video'); }
 
     if (typeof rebuildOnTheFly === 'function') rebuildOnTheFly();
     if (prevIntro !== config.intro) { introProgress = 0; startTime = Date.now(); }
@@ -93,6 +96,7 @@ document.getElementById('cfgImage').addEventListener('change', e => {
 
 let uploadedVideo = null;
 let videoReady = false;
+let videoBase64 = null;
 const videoEl = document.createElement('video');
 videoEl.muted = true; videoEl.loop = true; videoEl.playsInline = true;
 document.getElementById('cfgVideo').addEventListener('change', e => {
@@ -102,6 +106,9 @@ document.getElementById('cfgVideo').addEventListener('change', e => {
     uploadedVideo = URL.createObjectURL(file);
     videoEl.src = uploadedVideo;
     videoEl.oncanplay = () => { videoReady = true; videoEl.play(); };
+    const reader = new FileReader();
+    reader.onload = () => { videoBase64 = reader.result; };
+    reader.readAsDataURL(file);
 });
 
 let sceneObjects = [];
@@ -185,7 +192,6 @@ let objMask = null;
 
 let mouse = { x: -1000, y: -1000, radius: 100 };
 canvas.addEventListener('mousemove', e => {
-    if (dragObj) return;
     const rect = canvas.getBoundingClientRect();
     mouse.x = e.clientX - rect.left;
     mouse.y = e.clientY - rect.top;
@@ -193,7 +199,7 @@ canvas.addEventListener('mousemove', e => {
 canvas.addEventListener('mouseleave', () => { if (!dragObj) { mouse.x = -1000; mouse.y = -1000; } });
 
 function initCharCache() {
-    ctx.font = `900 14px '${config.font}', sans-serif`;
+    ctx.font = `900 14px '${config.fontFill}', sans-serif`;
     charWidths = {};
     const text = config.fillText || "ERound";
     for (const char of new Set(text + " ")) {
@@ -236,7 +242,7 @@ function createMask() {
     let maxAllowedScale2 = 200;
 
     if (config.layout === 'center' || config.layout === 'center2') {
-        offCtx.font = `900 300px '${config.font}', sans-serif`;
+        offCtx.font = `900 300px '${config.fontMask}', sans-serif`;
         let metrics = offCtx.measureText(config.mask);
         if (metrics.width > 0) maxAllowedScale = Math.floor((maxUsableWidth / metrics.width) * 100);
         maxAllowedScale = Math.min(Math.max(maxAllowedScale, 10), 500);
@@ -267,22 +273,22 @@ function createMask() {
 
     if (config.layout === 'center') {
         offCtx.textAlign = 'center'; offCtx.textBaseline = 'middle';
-        let fs = 300 * scaleMult; offCtx.font = `900 ${fs}px '${config.font}', sans-serif`;
+        let fs = 300 * scaleMult; offCtx.font = `900 ${fs}px '${config.fontMask}', sans-serif`;
         let m = offCtx.measureText(config.mask);
-        if (m.width > maxUsableWidth) { fs *= maxUsableWidth / m.width; offCtx.font = `900 ${fs}px '${config.font}', sans-serif`; }
+        if (m.width > maxUsableWidth) { fs *= maxUsableWidth / m.width; offCtx.font = `900 ${fs}px '${config.fontMask}', sans-serif`; }
         offCtx.fillText(config.mask, width / 2, height / 2);
     }
     else if (config.layout === 'center2') {
         offCtx.textAlign = 'center'; offCtx.textBaseline = 'middle';
-        let f1 = 300 * scaleMult; offCtx.font = `900 ${f1}px '${config.font}', sans-serif`;
+        let f1 = 300 * scaleMult; offCtx.font = `900 ${f1}px '${config.fontMask}', sans-serif`;
         let m1 = offCtx.measureText(config.mask);
         if (m1.width > maxUsableWidth) f1 *= maxUsableWidth / m1.width;
-        let f2 = 300 * scaleMult2; offCtx.font = `900 ${f2}px '${config.font}', sans-serif`;
+        let f2 = 300 * scaleMult2; offCtx.font = `900 ${f2}px '${config.fontMask}', sans-serif`;
         let m2 = offCtx.measureText(config.mask2);
         if (m2.width > maxUsableWidth) f2 *= maxUsableWidth / m2.width;
         let gap = 20, sy = (height / 2) - (f1 + f2 + gap) / 2;
-        offCtx.font = `900 ${f1}px '${config.font}', sans-serif`; offCtx.fillText(config.mask, width / 2, sy + f1 / 2);
-        offCtx.font = `900 ${f2}px '${config.font}', sans-serif`; offCtx.fillText(config.mask2, width / 2, sy + f1 + gap + f2 / 2);
+        offCtx.font = `900 ${f1}px '${config.fontMask}', sans-serif`; offCtx.fillText(config.mask, width / 2, sy + f1 / 2);
+        offCtx.font = `900 ${f2}px '${config.fontMask}', sans-serif`; offCtx.fillText(config.mask2, width / 2, sy + f1 + gap + f2 / 2);
     }
     else if (config.layout === 'col-single') {
         let tw = Math.min(maxUsableWidth * 0.7 * scaleMult, maxUsableWidth);
@@ -329,7 +335,7 @@ function createMask() {
 
     for (let y = 0; y < height; y += lineHeight) {
         let rowIntervals = []; let inText = false; let startX = 0;
-        for (let x = 0; x < width; x += 4) {
+        for (let x = 0; x < width; x += 1) {
             const hasMask = imgData[(y * width + x) * 4 + 3] > 128;
             const blocked = objMask ? objMask[y * width + x] : false;
             const visible = hasMask && !blocked;
@@ -445,7 +451,7 @@ function animate() {
     if (config.intro === 'none') introProgress = 1;
     else if (introProgress < 1) { introProgress += 0.008 * introSpeedMult; if (introProgress >= 1) introProgress = 1; }
 
-    ctx.font = `900 14px '${config.font}', sans-serif`;
+    ctx.font = `900 14px '${config.fontFill}', sans-serif`;
     ctx.textBaseline = 'top';
     ctx.globalAlpha = (config.intro === 'fade') ? introProgress : 1;
 
@@ -469,15 +475,31 @@ function animate() {
 
     for (const copy of copies) {
         let yOff = needsClip ? (yPixelOffset % patternH) + copy * patternH : 0;
-        for (let i = 0; i < maskIntervals.length; i++) {
-            const row = maskIntervals[i];
-            let renderY = row.y + yOff;
-            if (renderY < -lineHeight || renderY > height + lineHeight) continue;
-            let rowCharIndex = Math.floor(charOffsetX + (i * 23));
-            for (let j = 0; j < row.intervals.length; j++) {
-                const interval = row.intervals[j];
-                drawTextSegment(interval.start, interval.end, renderY, ease, time, rowCharIndex, i);
-                rowCharIndex += Math.floor((interval.end - interval.start) / 8);
+        if (config.layout === 'col-indep') {
+            const maxCols = Math.max(...maskIntervals.map(r => r.intervals.length));
+            let cumCharIdx = Math.floor(charOffsetX);
+            for (let col = 0; col < maxCols; col++) {
+                for (let i = 0; i < maskIntervals.length; i++) {
+                    const row = maskIntervals[i];
+                    if (col >= row.intervals.length) continue;
+                    let renderY = row.y + yOff;
+                    if (renderY < -lineHeight || renderY > height + lineHeight) { cumCharIdx += Math.floor((row.intervals[col].end - row.intervals[col].start) / 8); continue; }
+                    const interval = row.intervals[col];
+                    drawTextSegment(interval.start, interval.end, renderY, ease, time, cumCharIdx, i);
+                    cumCharIdx += Math.floor((interval.end - interval.start) / 8);
+                }
+            }
+        } else {
+            for (let i = 0; i < maskIntervals.length; i++) {
+                const row = maskIntervals[i];
+                let renderY = row.y + yOff;
+                if (renderY < -lineHeight || renderY > height + lineHeight) continue;
+                let rowCharIndex = Math.floor(charOffsetX + (i * 23));
+                for (let j = 0; j < row.intervals.length; j++) {
+                    const interval = row.intervals[j];
+                    drawTextSegment(interval.start, interval.end, renderY, ease, time, rowCharIndex, i);
+                    rowCharIndex += Math.floor((interval.end - interval.start) / 8);
+                }
             }
         }
     }
@@ -581,6 +603,11 @@ function drawTextSegment(startX, endX, targetY, ease, time, startIndex, rowIndex
             }
             if (config.mouseFX === 'flashlight' && dist > mouse.radius) renderChar = false;
 
+            if (renderChar && objMask) {
+                const rx = Math.round(actualX + mouseX), ry = Math.round(actualY + mouseY);
+                if (rx >= 0 && rx < width && ry >= 0 && ry < height && objMask[ry * width + rx]) renderChar = false;
+            }
+
             if (renderChar) ctx.fillText(char, actualX + mouseX, actualY + mouseY);
         }
         currentX += charW;
@@ -627,6 +654,7 @@ function generateExportHTML() {
     const bg = config.isDark ? '#111' : '#ffffff';
     const fg = config.isDark ? '#eeeeee' : '#111111';
     const imgB64 = config.layout === 'image' ? getImageBase64(uploadedImage) : null;
+    const vidB64 = config.layout === 'video' ? videoBase64 : null;
 
     const objsData = sceneObjects.map(o => ({
         src: getImageBase64(o.img), x: o.x, y: o.y, w: o.w, h: o.h
@@ -634,13 +662,13 @@ function generateExportHTML() {
 
     const cfgStr = JSON.stringify({
         mask: config.mask, mask2: config.mask2, fillText: config.fillText || 'ERound',
-        font: config.font, layout: config.layout === 'video' ? 'center' : config.layout,
+        fontMask: config.fontMask, fontFill: config.fontFill, layout: config.layout,
         intro: config.intro, idle: config.idle, mouseFX: config.mouseFX,
         scale: config.scale, scale2: config.scale2,
         introSpeed: config.introSpeed, speedX: config.speedX, speedY: config.speedY,
         isDark: config.isDark, mouseRadius: config.mouseRadius, mouseForce: config.mouseForce,
         videoThreshold: config.videoThreshold, objPadding: config.objPadding,
-        imgData: imgB64, objects: objsData
+        imgData: imgB64, videoData: vidB64, objects: objsData
     }, null, 2);
 
     return `<!DOCTYPE html>
@@ -649,7 +677,7 @@ function generateExportHTML() {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PreText Effect</title>
-<link href="https://fonts.googleapis.com/css2?family=${config.font}:wght@900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=${config.fontMask}:wght@900&family=${config.fontFill}:wght@900&display=swap" rel="stylesheet">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: ${bg}; overflow: hidden; }
@@ -673,16 +701,24 @@ canvas.addEventListener("mousemove", function(e) {
 canvas.addEventListener("mouseleave", function() { mouse.x = -1000; mouse.y = -1000; });
 
 function initCC() {
-    ctx.font = "900 14px '" + cfg.font + "', sans-serif"; cW = {};
+    ctx.font = "900 14px '" + cfg.fontFill + "', sans-serif"; cW = {};
     var t = cfg.fillText || "ERound", chars = Array.from(new Set(t + " "));
     for (var i = 0; i < chars.length; i++) cW[chars[i]] = ctx.measureText(chars[i]).width;
 }
 
 var loadedImg = null;
+var vidEl = null, vidReady = false;
 function loadAssets(cb) {
     var pending = 1;
     function done() { if (--pending === 0) cb(); }
     if (cfg.imgData) { pending++; loadedImg = new Image(); loadedImg.onload = done; loadedImg.src = cfg.imgData; }
+    if (cfg.videoData) {
+        pending++;
+        vidEl = document.createElement("video");
+        vidEl.muted = true; vidEl.loop = true; vidEl.playsInline = true;
+        vidEl.oncanplay = function() { vidReady = true; vidEl.play(); done(); };
+        vidEl.src = cfg.videoData;
+    }
     if (cfg.objects && cfg.objects.length) {
         for (var i = 0; i < cfg.objects.length; i++) { (function(od) {
             pending++; var im = new Image(); im.onload = function() {
@@ -735,18 +771,18 @@ function createMask() {
     var pX = 40, mW = W - pX * 2, mH = H - pX * 2, s = cfg.scale / 100, s2 = cfg.scale2 / 100;
     if (cfg.layout === "center") {
         o.textAlign = "center"; o.textBaseline = "middle";
-        var fs = 300 * s; o.font = "900 " + fs + "px '" + cfg.font + "', sans-serif";
-        var m = o.measureText(cfg.mask); if (m.width > mW) { fs *= mW / m.width; o.font = "900 " + fs + "px '" + cfg.font + "', sans-serif"; }
+        var fs = 300 * s; o.font = "900 " + fs + "px '" + cfg.fontMask + "', sans-serif";
+        var m = o.measureText(cfg.mask); if (m.width > mW) { fs *= mW / m.width; o.font = "900 " + fs + "px '" + cfg.fontMask + "', sans-serif"; }
         o.fillText(cfg.mask, W / 2, H / 2);
     } else if (cfg.layout === "center2") {
         o.textAlign = "center"; o.textBaseline = "middle";
-        var f1 = 300 * s; o.font = "900 " + f1 + "px '" + cfg.font + "', sans-serif";
+        var f1 = 300 * s; o.font = "900 " + f1 + "px '" + cfg.fontMask + "', sans-serif";
         var m1 = o.measureText(cfg.mask); if (m1.width > mW) f1 *= mW / m1.width;
-        var f2 = 300 * s2; o.font = "900 " + f2 + "px '" + cfg.font + "', sans-serif";
+        var f2 = 300 * s2; o.font = "900 " + f2 + "px '" + cfg.fontMask + "', sans-serif";
         var m2 = o.measureText(cfg.mask2); if (m2.width > mW) f2 *= mW / m2.width;
         var gap = 20, sY = (H / 2) - (f1 + f2 + gap) / 2;
-        o.font = "900 " + f1 + "px '" + cfg.font + "', sans-serif"; o.fillText(cfg.mask, W / 2, sY + f1 / 2);
-        o.font = "900 " + f2 + "px '" + cfg.font + "', sans-serif"; o.fillText(cfg.mask2, W / 2, sY + f1 + gap + f2 / 2);
+        o.font = "900 " + f1 + "px '" + cfg.fontMask + "', sans-serif"; o.fillText(cfg.mask, W / 2, sY + f1 / 2);
+        o.font = "900 " + f2 + "px '" + cfg.fontMask + "', sans-serif"; o.fillText(cfg.mask2, W / 2, sY + f1 + gap + f2 / 2);
     } else if (cfg.layout === "col-single") {
         var tw = Math.min(mW * 0.7 * s, mW), ch = Math.min(H * 0.75 * s, mH); o.fillRect((W - tw) / 2, (H - ch) / 2, tw, ch);
     } else if (cfg.layout === "col-narrow") {
@@ -764,12 +800,23 @@ function createMask() {
         var iD = o.getImageData(0, 0, W, H), px = iD.data, thr = cfg.videoThreshold / 100 * 255;
         for (var p = 0; p < px.length; p += 4) { var lm = px[p]*0.299+px[p+1]*0.587+px[p+2]*0.114; px[p+3] = px[p+3]<250?px[p+3]:(lm<thr?255:0); }
         o.putImageData(iD, 0, 0);
+    } else if (cfg.layout === "video" && vidEl && vidReady) {
+        var vw = vidEl.videoWidth, vh = vidEl.videoHeight;
+        if (vw && vh) {
+            var vA = vw / vh, cA2 = mW / mH, dW2, dH2;
+            if (vA > cA2) { dW2 = mW * s; dH2 = dW2 / vA; } else { dH2 = mH * s; dW2 = dH2 * vA; }
+            if (dW2 > mW) { dW2 = mW; dH2 = dW2 / vA; } if (dH2 > mH) { dH2 = mH; dW2 = dH2 * vA; }
+            o.drawImage(vidEl, (W - dW2) / 2, (H - dH2) / 2, dW2, dH2);
+            var iD2 = o.getImageData(0, 0, W, H), px2 = iD2.data, thr2 = cfg.videoThreshold / 100 * 255;
+            for (var p2 = 0; p2 < px2.length; p2 += 4) { var lm2 = px2[p2]*0.299+px2[p2+1]*0.587+px2[p2+2]*0.114; px2[p2+3] = px2[p2+3]<250?px2[p2+3]:(lm2<thr2?255:0); }
+            o.putImageData(iD2, 0, 0);
+        }
     }
     buildOM();
     var d = o.getImageData(0, 0, W, H).data;
     for (var y = 0; y < H; y += LH) {
         var ri = [], inT = false, sX = 0;
-        for (var x = 0; x < W; x += 4) {
+        for (var x = 0; x < W; x += 1) {
             var vis = d[(y * W + x) * 4 + 3] > 128 && !(objM && objM[y * W + x]);
             if (vis) { if (!inT) { inT = true; sX = x; } }
             else if (inT) { inT = false; ri.push({ start: sX, end: x }); }
@@ -783,12 +830,17 @@ function createMask() {
     }
 }
 
+var lastVidRebuild = 0;
 function animate() {
     ctx.clearRect(0, 0, W, H);
+    if (cfg.layout === "video" && vidReady) {
+        var now = Date.now();
+        if (now - lastVidRebuild > 66) { lastVidRebuild = now; createMask(); }
+    }
     var introSM = cfg.introSpeed / 100;
     if (cfg.intro === "none") introP = 1;
     else if (introP < 1) { introP += 0.008 * introSM; if (introP >= 1) introP = 1; }
-    ctx.font = "900 14px '" + cfg.font + "', sans-serif"; ctx.textBaseline = "top";
+    ctx.font = "900 14px '" + cfg.fontFill + "', sans-serif"; ctx.textBaseline = "top";
     ctx.globalAlpha = (cfg.intro === "fade") ? introP : 1;
     var ease = 1 - Math.pow(1 - introP, 3), time = Date.now() * 0.0015;
     var cOX = (Date.now() - startT) * 0.01 * (cfg.speedX / 15);
@@ -800,13 +852,25 @@ function animate() {
     var copies = needClip ? [-1, 0, 1] : [0];
     for (var c = 0; c < copies.length; c++) {
         var yS = needClip ? (yOff % pH) + copies[c] * pH : 0;
-        for (var i = 0; i < maskI.length; i++) {
-            var row = maskI[i], rY = row.y + yS;
-            if (rY < -LH || rY > H + LH) continue;
-            var rCI = Math.floor(cOX + (i * 23));
-            for (var j = 0; j < row.intervals.length; j++) {
-                var iv = row.intervals[j]; drawSeg(iv.start, iv.end, rY, ease, time, rCI, i);
-                rCI += Math.floor((iv.end - iv.start) / 8);
+        if (cfg.layout === "col-indep") {
+            var mxC = 0; for (var mi = 0; mi < maskI.length; mi++) mxC = Math.max(mxC, maskI[mi].intervals.length);
+            var cumCI = Math.floor(cOX);
+            for (var col = 0; col < mxC; col++) { for (var i = 0; i < maskI.length; i++) {
+                var row = maskI[i]; if (col >= row.intervals.length) continue;
+                var rY = row.y + yS; var iv = row.intervals[col];
+                if (rY < -LH || rY > H + LH) { cumCI += Math.floor((iv.end - iv.start) / 8); continue; }
+                drawSeg(iv.start, iv.end, rY, ease, time, cumCI, i);
+                cumCI += Math.floor((iv.end - iv.start) / 8);
+            } }
+        } else {
+            for (var i = 0; i < maskI.length; i++) {
+                var row = maskI[i], rY = row.y + yS;
+                if (rY < -LH || rY > H + LH) continue;
+                var rCI = Math.floor(cOX + (i * 23));
+                for (var j = 0; j < row.intervals.length; j++) {
+                    var iv = row.intervals[j]; drawSeg(iv.start, iv.end, rY, ease, time, rCI, i);
+                    rCI += Math.floor((iv.end - iv.start) / 8);
+                }
             }
         }
     }
@@ -845,6 +909,7 @@ function drawSeg(sX, eX, tY, ease, time, sIdx, rIdx) {
                 else if(cfg.mouseFX==="gravity"){mX=-(ddx/dd)*force*30*fM;mY=-(ddy/dd)*force*30*fM;}
                 else if(cfg.mouseFX==="vortex"){var a=Math.atan2(ddy,ddx)+Math.PI/2;mX=Math.cos(a)*force*50*fM;mY=Math.sin(a)*force*50*fM;}}
             if(cfg.mouseFX==="flashlight"&&dd>mouse.radius)render=false;
+            if(render&&objM){var rx=Math.round(aX+mX),ry=Math.round(aY+mY);if(rx>=0&&rx<W&&ry>=0&&ry<H&&objM[ry*W+rx])render=false;}
             if(render)ctx.fillText(ch,aX+mX,aY+mY);
         }
         cX += chW; cIdx++;
