@@ -3,40 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <title>FX Generator</title>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@900&family=Montserrat:wght@900&family=Oswald:wght@700&family=Roboto:wght@900&display=swap" rel="stylesheet">
+    <link id="googleFontsLink" href="" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
 </head>
 <body class="light-theme">
-    <div id="sidebar">
+
+    <button id="sidebarToggle" title="Показать/скрыть панель">&#9776;</button>
+
+    <div id="sidebar" class="open">
         <div class="sidebar-header">
-            <div class="theme-switch">
-                <span>Интерфейс</span>
-                <button id="toggleTheme">Тёмная тема</button>
+            <div class="header-row">
+                <h2>FX Generator</h2>
+                <div class="header-btns">
+                    <button id="toggleTheme" title="Сменить тему">&#9681;</button>
+                    <button id="sidebarClose" title="Скрыть панель">&times;</button>
+                </div>
             </div>
-            <h2>Настройки FX</h2>
+            <div class="presets-row">
+                <select id="cfgPreset">
+                    <option value="">-- Пресет --</option>
+                    <option value="hero">Hero (Заголовок)</option>
+                    <option value="newspaper">Newspaper (Газета)</option>
+                    <option value="matrix">Matrix (Матрица)</option>
+                    <option value="liquid">Liquid (Жидкость)</option>
+                    <option value="neon">Neon (Неон)</option>
+                    <option value="minimal">Minimal (Минимализм)</option>
+                </select>
+            </div>
         </div>
-        
+
         <div class="sidebar-scroll">
+            <!-- СЕКЦИЯ: МАСКА -->
             <div class="accordion">
                 <div class="accordion-header active">
-                    <span>Настройка текста</span>
-                    <span class="caret">▼</span>
+                    <span>Маска</span>
+                    <span class="caret">&#9660;</span>
                 </div>
                 <div class="accordion-content open">
                     <div class="accordion-inner">
                         <div class="control-group">
+                            <label>Форма маски:</label>
+                            <select id="cfgLayout">
+                                <option value="center">По центру (1 слово)</option>
+                                <option value="center2">По центру (2 слова)</option>
+                                <option value="col-single">Сплошной текст</option>
+                                <option value="col-narrow">1 Столбец</option>
+                                <option value="col-indep">3 Столбца (газетные)</option>
+                                <option value="image">Из картинки</option>
+                                <option value="video">Из видео</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
                             <label>Слово-маска:</label>
                             <input type="text" id="cfgMaskText" value="SEVERYAN">
                         </div>
-						<div class="dynamic-group" id="groupWord2">
+                        <div class="dynamic-group" id="groupWord2">
                             <div class="dynamic-inner">
                                 <div class="control-group">
                                     <label>Второе слово:</label>
                                     <input type="text" id="cfgMaskText2" value="CODE">
                                 </div>
                                 <div class="control-group">
-                                    <label>Масштаб 2 слова (%):</label>
+                                    <label>Масштаб 2 слова:</label>
                                     <div class="slider-row">
                                         <input type="range" id="cfgScale2" min="10" max="200" value="80">
                                         <input type="number" id="cfgScaleVal2" value="80">
@@ -45,38 +74,16 @@
                             </div>
                         </div>
                         <div class="control-group">
-                            <label>Текст заполнения маски:</label>
-                            <textarea id="cfgFillText" rows="3">Только чистый и лёгкий код.</textarea>
-                        </div>
-                        <div class="control-group">
                             <label>Шрифт маски:</label>
-                            <select id="cfgFontMask">
-                                <option value="Manrope">Manrope</option>
-                                <option value="Roboto">Roboto</option>
-                                <option value="Montserrat">Montserrat</option>
-                                <option value="Oswald">Oswald</option>
-                            </select>
+                            <div class="font-picker" id="fontPickerMask"></div>
+                            <input type="hidden" id="cfgFontMask" value="Manrope">
                         </div>
                         <div class="control-group">
-                            <label>Шрифт заполнения:</label>
-                            <select id="cfgFontFill">
-                                <option value="Manrope">Manrope</option>
-                                <option value="Roboto">Roboto</option>
-                                <option value="Montserrat">Montserrat</option>
-                                <option value="Oswald">Oswald</option>
-                            </select>
-                        </div>
-                        <div class="control-group">
-                            <label>Форма маски:</label>
-                            <select id="cfgLayout">
-                                <option value="center">По центру (1 слово)</option>
-                                <option value="center2">По центру (2 слова)</option>
-                                <option value="col-single">Сплошной текст</option>
-                                <option value="col-narrow">1 Столбец</option>
-                                <option value="col-indep">3 Столбца</option>
-                                <option value="image">Из картинки</option>
-                                <option value="video">Из видео</option>
-                            </select>
+                            <label>Масштаб маски:</label>
+                            <div class="slider-row">
+                                <input type="range" id="cfgScale" min="10" max="200" value="100">
+                                <input type="number" id="cfgScaleVal" value="100">
+                            </div>
                         </div>
                         <div class="dynamic-group" id="groupImage">
                             <div class="dynamic-inner">
@@ -97,19 +104,12 @@
                         <div class="dynamic-group" id="groupThreshold">
                             <div class="dynamic-inner">
                                 <div class="control-group">
-                                    <label>Порог яркости (%):</label>
+                                    <label>Порог яркости:</label>
                                     <div class="slider-row">
                                         <input type="range" id="cfgVideoThreshold" min="10" max="90" value="50">
                                         <input type="number" id="cfgVideoThresholdVal" value="50">
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                        <div class="control-group">
-                            <label>Масштаб / Размер (%):</label>
-                            <div class="slider-row">
-                                <input type="range" id="cfgScale" min="10" max="200" value="100">
-                                <input type="number" id="cfgScaleVal" value="100">
                             </div>
                         </div>
                     </div>
@@ -118,94 +118,156 @@
 
             <div class="accordion">
                 <div class="accordion-header">
-                    <span>Настройка анимации</span>
-                    <span class="caret">▼</span>
+                    <span>Текст заполнения</span>
+                    <span class="caret">&#9660;</span>
                 </div>
                 <div class="accordion-content">
                     <div class="accordion-inner">
                         <div class="control-group">
-                            <label>Анимация появления:</label>
-                            <select id="cfgIntro">
-                                <option value="none">Без эффекта</option>
-                                <option value="explosion" selected>Фонтан / Взрыв</option>
-                                <option value="tape">Кинолента (Вьющаяся)</option>
-                                <option value="fade">Плавное проявление (Fade)</option>
-                                <option value="drop">Падение сверху (Drop)</option>
-                                <option value="spin">Вихрь / Раскрутка (Spin)</option>
-                            </select>
+                            <label>Текст:</label>
+                            <textarea id="cfgFillText" rows="2">Только чистый и лёгкий код.</textarea>
                         </div>
                         <div class="control-group">
-                            <label>Скорость появления:</label>
+                            <label>Шрифт:</label>
+                            <div class="font-picker" id="fontPickerFill"></div>
+                            <input type="hidden" id="cfgFontFill" value="Manrope">
+                        </div>
+                        <div class="control-group">
+                            <label>Размер текста (px):</label>
                             <div class="slider-row">
-                                <input type="range" id="cfgIntroSpeed" min="10" max="300" value="100">
-                                <input type="number" id="cfgIntroSpeedVal" value="100">
+                                <input type="range" id="cfgFillSize" min="6" max="30" value="14">
+                                <input type="number" id="cfgFillSizeVal" value="14">
                             </div>
                         </div>
                         <div class="control-group">
-                            <label>Фоновая анимация:</label>
-                            <select id="cfgIdle">
-                                <option value="none">Без анимации</option>
-                                <option value="wave" selected>Дыхание (Волна)</option>
-                                <option value="pulse">Пульсация</option>
-                                <option value="glitch">Шум (Глитч)</option>
-                                <option value="lens">Линза</option>
-                                <option value="liquid">Жидкость</option>
-                            </select>
-                        </div>
-                        <div class="control-group">
-                            <label>Реакция на курсор:</label>
-                            <select id="cfgMouse">
-                                <option value="none">Без реакции</option>
-                                <option value="repel" selected>Отталкивание (Нож сквозь масло)</option>
-                                <option value="gravity">Гравитация (Притяжение)</option>
-                                <option value="vortex">Вихрь (Торнадо)</option>
-                                <option value="flashlight">Фонарик</option>
-                            </select>
-                        </div>
-                        <div class="control-group">
-                            <label>Радиус реакции:</label>
-                            <div class="slider-row">
-                                <input type="range" id="cfgMouseRadius" min="30" max="300" value="100">
-                                <input type="number" id="cfgMouseRadiusVal" value="100">
-                            </div>
-                        </div>
-                        <div class="control-group">
-                            <label>Сила реакции (%):</label>
-                            <div class="slider-row">
-                                <input type="range" id="cfgMouseForce" min="10" max="200" value="100">
-                                <input type="number" id="cfgMouseForceVal" value="100">
-                            </div>
-                        </div>
-                        <div class="control-group">
-                            <label>Скорость бегущей строки X:</label>
-                            <div class="slider-row">
-                                <input type="range" id="cfgSpeedX" min="-100" max="100" value="30">
-                                <input type="number" id="cfgSpeedXVal" value="30">
-                            </div>
-                        </div>
-                        <div class="control-group">
-                            <label>Скорость бегущей строки Y:</label>
-                            <div class="slider-row">
-                                <input type="range" id="cfgSpeedY" min="-100" max="100" value="0">
-                                <input type="number" id="cfgSpeedYVal" value="0">
+                            <label>Цвет текста:</label>
+                            <div class="color-row">
+                                <input type="color" id="cfgTextColor" value="#111111">
+                                <input type="text" id="cfgTextColorHex" value="#111111" maxlength="7">
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
             <div class="accordion">
                 <div class="accordion-header">
-                    <span>PNG-объекты (обтекание)</span>
-                    <span class="caret">▼</span>
+                    <span>Фон</span>
+                    <span class="caret">&#9660;</span>
                 </div>
                 <div class="accordion-content">
                     <div class="accordion-inner">
                         <div class="control-group">
-                            <label>Добавить PNG-объект:</label>
-                            <input type="file" id="cfgAddObject" accept="image/png">
+                            <label>Цвет фона:</label>
+                            <div class="color-row">
+                                <input type="color" id="cfgBgColor" value="#ffffff">
+                                <input type="text" id="cfgBgColorHex" value="#ffffff" maxlength="7">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion">
+                <div class="accordion-header">
+                    <span>Анимация</span>
+                    <span class="caret">&#9660;</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-inner">
+                        <div class="two-col">
+                            <div class="control-group">
+                                <label>Появление:</label>
+                                <select id="cfgIntro">
+                                    <option value="none">Без эффекта</option>
+                                    <option value="explosion" selected>Взрыв</option>
+                                    <option value="tape">Кинолента</option>
+                                    <option value="fade">Fade</option>
+                                    <option value="drop">Drop</option>
+                                    <option value="spin">Вихрь</option>
+                                    <option value="glitch">Глитч</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Скорость:</label>
+                                <div class="slider-row">
+                                    <input type="range" id="cfgIntroSpeed" min="10" max="300" value="100">
+                                    <input type="number" id="cfgIntroSpeedVal" value="100">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="two-col">
+                            <div class="control-group">
+                                <label>Фоновая:</label>
+                                <select id="cfgIdle">
+                                    <option value="none">Без анимации</option>
+                                    <option value="wave" selected>Волна</option>
+                                    <option value="pulse">Пульсация</option>
+                                    <option value="glitch">Глитч</option>
+                                    <option value="lens">Линза</option>
+                                    <option value="liquid">Жидкость</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Курсор:</label>
+                                <select id="cfgMouse">
+                                    <option value="none">Без реакции</option>
+                                    <option value="repel" selected>Отталкивание</option>
+                                    <option value="gravity">Притяжение</option>
+                                    <option value="vortex">Торнадо</option>
+                                    <option value="flashlight">Фонарик</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="two-col">
+                            <div class="control-group">
+                                <label>Радиус курсора:</label>
+                                <div class="slider-row">
+                                    <input type="range" id="cfgMouseRadius" min="30" max="300" value="100">
+                                    <input type="number" id="cfgMouseRadiusVal" value="100">
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>Сила курсора:</label>
+                                <div class="slider-row">
+                                    <input type="range" id="cfgMouseForce" min="10" max="200" value="100">
+                                    <input type="number" id="cfgMouseForceVal" value="100">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="two-col">
+                            <div class="control-group">
+                                <label>Скорость X:</label>
+                                <div class="slider-row">
+                                    <input type="range" id="cfgSpeedX" min="-100" max="100" value="30">
+                                    <input type="number" id="cfgSpeedXVal" value="30">
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>Скорость Y:</label>
+                                <div class="slider-row">
+                                    <input type="range" id="cfgSpeedY" min="-100" max="100" value="0">
+                                    <input type="number" id="cfgSpeedYVal" value="0">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion">
+                <div class="accordion-header">
+                    <span>PNG-объекты</span>
+                    <span class="caret">&#9660;</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-inner">
+                        <div class="control-group">
+                            <label>Добавить объект:</label>
+                            <input type="file" id="cfgAddObject" accept="image/png,image/gif">
                         </div>
                         <div class="control-group">
-                            <label>Отступ обтекания (px):</label>
+                            <label>Отступ обтекания:</label>
                             <div class="slider-row">
                                 <input type="range" id="cfgObjPadding" min="0" max="60" value="15">
                                 <input type="number" id="cfgObjPaddingVal" value="15">
@@ -221,8 +283,10 @@
             <button id="exportOpenBtn">Экспорт</button>
         </div>
     </div>
-    
+
     <div id="preview"><canvas id="canvas"></canvas></div>
+
+
 
     <div id="exportModal" class="modal-overlay">
         <div class="modal modal-export">
@@ -237,25 +301,25 @@
 
             <div class="export-tab-content active" id="tabCode">
                 <div class="modal-body">
-                    <p class="modal-desc">Код полностью автономный и работает без сервера — достаточно открыть .html файл в браузере. Вставьте в свой проект через iframe или скопируйте движок напрямую.</p>
+                    <p class="modal-desc">Код полностью автономный. Откройте .html в браузере или вставьте через iframe.</p>
                     <textarea id="exportCode" readonly></textarea>
                 </div>
                 <div class="modal-footer">
                     <button id="copyCodeBtn">Скопировать код</button>
-                    <button id="downloadHtmlBtn">Скачать .HTML файл</button>
+                    <button id="downloadHtmlBtn">Скачать .HTML</button>
                 </div>
             </div>
 
             <div class="export-tab-content" id="tabGif">
                 <div class="modal-body">
-                    <p class="modal-desc">Запишите анимацию эффекта в GIF-файл. Настройте параметры и нажмите кнопку записи.</p>
+                    <p class="modal-desc">Запишите анимацию в GIF. Настройте параметры и нажмите кнопку записи.</p>
                     <div class="gif-settings-grid">
                         <div class="control-group">
                             <label>Длительность (сек):</label>
                             <input type="number" id="gifDuration" value="3" min="1" max="15" step="0.5">
                         </div>
                         <div class="control-group">
-                            <label>Кадров в секунду (FPS):</label>
+                            <label>FPS:</label>
                             <input type="number" id="gifFps" value="20" min="5" max="30">
                         </div>
                         <div class="control-group">

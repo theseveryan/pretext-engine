@@ -1,15 +1,31 @@
 const config = {
     mask: "SEVERYAN", mask2: "CODE", fillText: "", fontMask: "Manrope", fontFill: "Manrope", layout: "center",
     intro: "explosion", idle: "wave", mouseFX: "repel",
-    scale: 100, scale2: 80, introSpeed: 100, speedX: 30, speedY: 0, isDark: false,
-    mouseRadius: 100, mouseForce: 100, videoThreshold: 50, objPadding: 15
+    scale: 100, scale2: 80, introSpeed: 100, speedX: 30, speedY: 0,
+    mouseRadius: 100, mouseForce: 100, videoThreshold: 50, objPadding: 15,
+    bgColor: "#ffffff", textColor: "#111111", fillSize: 14
 };
 
-const themeBtn = document.getElementById('toggleTheme');
-themeBtn.addEventListener('click', () => {
-    const isLightNow = document.body.classList.toggle('light-theme');
-    config.isDark = !isLightNow;
-    themeBtn.textContent = isLightNow ? 'Тёмная тема' : 'Светлая тема';
+document.getElementById('sidebarToggle').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.add('open');
+});
+document.getElementById('sidebarClose').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.remove('open');
+});
+
+document.getElementById('toggleTheme').addEventListener('click', () => {
+    document.body.classList.toggle('light-theme');
+    const isLight = document.body.classList.contains('light-theme');
+    if (!document.getElementById('cfgBgColor')._userSet) {
+        config.bgColor = isLight ? '#ffffff' : '#111111';
+        document.getElementById('cfgBgColor').value = config.bgColor;
+        document.getElementById('cfgBgColorHex').value = config.bgColor;
+    }
+    if (!document.getElementById('cfgTextColor')._userSet) {
+        config.textColor = isLight ? '#111111' : '#eeeeee';
+        document.getElementById('cfgTextColor').value = config.textColor;
+        document.getElementById('cfgTextColorHex').value = config.textColor;
+    }
 });
 
 document.querySelectorAll('.accordion-header').forEach(header => {
@@ -35,10 +51,259 @@ syncSlider('cfgMouseRadius', 'cfgMouseRadiusVal');
 syncSlider('cfgMouseForce', 'cfgMouseForceVal');
 syncSlider('cfgVideoThreshold', 'cfgVideoThresholdVal');
 syncSlider('cfgObjPadding', 'cfgObjPaddingVal');
+syncSlider('cfgFillSize', 'cfgFillSizeVal');
+
+function syncColor(colorId, hexId, configKey) {
+    const picker = document.getElementById(colorId);
+    const hex = document.getElementById(hexId);
+    picker.addEventListener('input', e => { hex.value = e.target.value; config[configKey] = e.target.value; picker._userSet = true; updateConfig(); });
+    hex.addEventListener('input', e => { if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) { picker.value = e.target.value; config[configKey] = e.target.value; picker._userSet = true; updateConfig(); } });
+}
+syncColor('cfgBgColor', 'cfgBgColorHex', 'bgColor');
+syncColor('cfgTextColor', 'cfgTextColorHex', 'textColor');
+
+const FONT_CATALOG = [
+    { name: 'Inter', cat: 'Sans-serif' },
+    { name: 'Roboto', cat: 'Sans-serif' },
+    { name: 'Montserrat', cat: 'Sans-serif' },
+    { name: 'Manrope', cat: 'Sans-serif' },
+    { name: 'Poppins', cat: 'Sans-serif' },
+    { name: 'Raleway', cat: 'Sans-serif' },
+    { name: 'Rubik', cat: 'Sans-serif' },
+    { name: 'Open Sans', cat: 'Sans-serif' },
+    { name: 'Lato', cat: 'Sans-serif' },
+    { name: 'Nunito', cat: 'Sans-serif' },
+    { name: 'Outfit', cat: 'Sans-serif' },
+    { name: 'DM Sans', cat: 'Sans-serif' },
+    { name: 'Space Grotesk', cat: 'Sans-serif' },
+    { name: 'Ubuntu', cat: 'Sans-serif' },
+    { name: 'Bebas Neue', cat: 'Display' },
+    { name: 'Oswald', cat: 'Display' },
+    { name: 'Anton', cat: 'Display' },
+    { name: 'Teko', cat: 'Display' },
+    { name: 'Passion One', cat: 'Display' },
+    { name: 'Russo One', cat: 'Display' },
+    { name: 'Bungee', cat: 'Display' },
+    { name: 'Righteous', cat: 'Display' },
+    { name: 'Orbitron', cat: 'Display' },
+    { name: 'Audiowide', cat: 'Display' },
+    { name: 'Black Ops One', cat: 'Display' },
+    { name: 'Permanent Marker', cat: 'Display' },
+    { name: 'Comfortaa', cat: 'Display' },
+    { name: 'Playfair Display', cat: 'Serif' },
+    { name: 'Merriweather', cat: 'Serif' },
+    { name: 'Lora', cat: 'Serif' },
+    { name: 'PT Serif', cat: 'Serif' },
+    { name: 'Noto Serif', cat: 'Serif' },
+    { name: 'Crimson Text', cat: 'Serif' },
+    { name: 'Fira Code', cat: 'Mono' },
+    { name: 'JetBrains Mono', cat: 'Mono' },
+    { name: 'Source Code Pro', cat: 'Mono' },
+    { name: 'IBM Plex Mono', cat: 'Mono' },
+    { name: 'Arial', cat: 'System', sys: true },
+    { name: 'Georgia', cat: 'System', sys: true },
+    { name: 'Courier New', cat: 'System', sys: true },
+    { name: 'Verdana', cat: 'System', sys: true },
+];
+
+const FONT_CAT_ORDER = ['Sans-serif', 'Display', 'Serif', 'Mono', 'System'];
+
+function loadAllFonts() {
+    const gFonts = FONT_CATALOG.filter(f => !f.sys);
+    const families = gFonts.map(f =>
+        `family=${f.name.replace(/ /g, '+')}:wght@400;700;900`
+    ).join('&');
+    const link = document.getElementById('googleFontsLink');
+    link.href = `https://fonts.googleapis.com/css2?${families}&display=swap`;
+}
+loadAllFonts();
+
+let activeFontPicker = null;
+
+class FontPicker {
+    constructor(containerId, hiddenInputId, initialFont) {
+        this.container = document.getElementById(containerId);
+        this.hiddenInput = document.getElementById(hiddenInputId);
+        this.selected = initialFont;
+        this.isOpen = false;
+        this.dropdown = null;
+        this._onDocClick = this._onDocClick.bind(this);
+        this._onScroll = this._onScroll.bind(this);
+        this._buildTrigger();
+    }
+
+    _buildTrigger() {
+        this.trigger = document.createElement('button');
+        this.trigger.type = 'button';
+        this.trigger.className = 'fp-trigger';
+        this.trigger.innerHTML = `<span class="fp-preview" style="font-family:'${this.selected}',sans-serif">${this.selected}</span><span class="fp-caret">&#9660;</span>`;
+        this.container.appendChild(this.trigger);
+        this.trigger.addEventListener('click', e => {
+            e.stopPropagation();
+            this.isOpen ? this.close() : this.open();
+        });
+    }
+
+    open() {
+        if (activeFontPicker && activeFontPicker !== this) activeFontPicker.close();
+        activeFontPicker = this;
+        this.isOpen = true;
+        this.trigger.classList.add('open');
+
+        this.dropdown = document.createElement('div');
+        this.dropdown.className = 'fp-dropdown';
+        this.dropdown.innerHTML = `
+            <div class="fp-search-wrap">
+                <span class="fp-search-icon">&#128269;</span>
+                <input type="text" class="fp-search" placeholder="Поиск шрифта...">
+            </div>
+            <div class="fp-list"></div>
+        `;
+        document.body.appendChild(this.dropdown);
+        this.dropdown.addEventListener('click', e => e.stopPropagation());
+
+        this._position();
+        this._fillList();
+
+        const search = this.dropdown.querySelector('.fp-search');
+        search.addEventListener('input', () => this._fillList(search.value));
+        setTimeout(() => search.focus(), 30);
+
+        document.addEventListener('click', this._onDocClick);
+        document.querySelector('.sidebar-scroll')?.addEventListener('scroll', this._onScroll);
+        window.addEventListener('resize', this._onScroll);
+    }
+
+    _position() {
+        const r = this.trigger.getBoundingClientRect();
+        const dh = 360;
+        const spaceBelow = window.innerHeight - r.bottom - 8;
+        const openAbove = spaceBelow < 200 && r.top > dh;
+        this.dropdown.style.left = r.left + 'px';
+        this.dropdown.style.width = Math.max(r.width, 260) + 'px';
+        if (openAbove) {
+            this.dropdown.style.bottom = (window.innerHeight - r.top + 4) + 'px';
+            this.dropdown.style.top = 'auto';
+        } else {
+            this.dropdown.style.top = (r.bottom + 4) + 'px';
+            this.dropdown.style.bottom = 'auto';
+        }
+    }
+
+    _fillList(filter = '') {
+        const list = this.dropdown.querySelector('.fp-list');
+        list.innerHTML = '';
+        const q = filter.toLowerCase();
+        let hasItems = false;
+
+        for (const cat of FONT_CAT_ORDER) {
+            const fonts = FONT_CATALOG.filter(f => f.cat === cat && f.name.toLowerCase().includes(q));
+            if (!fonts.length) continue;
+            hasItems = true;
+
+            const catEl = document.createElement('div');
+            catEl.className = 'fp-cat';
+            catEl.textContent = cat === 'Mono' ? 'Моноширинные' : cat === 'System' ? 'Системные' : cat;
+            list.appendChild(catEl);
+
+            for (const font of fonts) {
+                const el = document.createElement('div');
+                el.className = 'fp-item' + (font.name === this.selected ? ' active' : '');
+                el.textContent = font.name;
+                el.style.fontFamily = `'${font.name}', sans-serif`;
+                el.addEventListener('click', () => this.select(font.name));
+                list.appendChild(el);
+            }
+        }
+
+        if (!hasItems) {
+            const empty = document.createElement('div');
+            empty.className = 'fp-empty';
+            empty.textContent = 'Ничего не найдено';
+            list.appendChild(empty);
+        }
+
+        if (!filter) {
+            const activeEl = list.querySelector('.fp-item.active');
+            if (activeEl) setTimeout(() => activeEl.scrollIntoView({ block: 'center' }), 10);
+        }
+    }
+
+    select(fontName) {
+        this.selected = fontName;
+        this.hiddenInput.value = fontName;
+        this.trigger.querySelector('.fp-preview').textContent = fontName;
+        this.trigger.querySelector('.fp-preview').style.fontFamily = `'${fontName}', sans-serif`;
+        this.close();
+        updateConfig();
+    }
+
+    setFont(fontName) {
+        this.selected = fontName;
+        this.hiddenInput.value = fontName;
+        this.trigger.querySelector('.fp-preview').textContent = fontName;
+        this.trigger.querySelector('.fp-preview').style.fontFamily = `'${fontName}', sans-serif`;
+    }
+
+    close() {
+        if (!this.isOpen) return;
+        this.isOpen = false;
+        this.trigger.classList.remove('open');
+        if (this.dropdown) { this.dropdown.remove(); this.dropdown = null; }
+        document.removeEventListener('click', this._onDocClick);
+        document.querySelector('.sidebar-scroll')?.removeEventListener('scroll', this._onScroll);
+        window.removeEventListener('resize', this._onScroll);
+        if (activeFontPicker === this) activeFontPicker = null;
+    }
+
+    _onDocClick() { this.close(); }
+    _onScroll() { if (this.isOpen) this._position(); }
+}
+
+let fontPickerMask, fontPickerFill;
+
+const presets = {
+    hero: { mask: "HELLO", fillText: "Welcome to the future of design.", fontMask: "Bebas Neue", fontFill: "Inter", layout: "center", intro: "explosion", idle: "wave", mouseFX: "repel", scale: 100, speedX: 20, speedY: 0, bgColor: "#0a0a0a", textColor: "#ffffff", fillSize: 14, introSpeed: 100, mouseRadius: 120, mouseForce: 100 },
+    newspaper: { mask: "NEWS", fillText: "Breaking news from around the world. Stay informed with the latest updates and stories that matter most to you and your community.", fontMask: "Playfair Display", fontFill: "Roboto", layout: "col-indep", intro: "fade", idle: "none", mouseFX: "repel", scale: 100, speedX: 0, speedY: 5, bgColor: "#f5f0e8", textColor: "#222222", fillSize: 11, introSpeed: 80, mouseRadius: 80, mouseForce: 60 },
+    matrix: { mask: "MATRIX", fillText: "01001010 11010010 00101101 10110100", fontMask: "Oswald", fontFill: "Courier New", layout: "center", intro: "drop", idle: "glitch", mouseFX: "repel", scale: 100, speedX: 0, speedY: -40, bgColor: "#000000", textColor: "#00ff41", fillSize: 12, introSpeed: 60, mouseRadius: 100, mouseForce: 150 },
+    liquid: { mask: "LIQUID", fillText: "Flow and motion design elements.", fontMask: "Montserrat", fontFill: "Manrope", layout: "center", intro: "tape", idle: "liquid", mouseFX: "vortex", scale: 100, speedX: 10, speedY: 0, bgColor: "#1a0033", textColor: "#cc88ff", fillSize: 14, introSpeed: 120, mouseRadius: 150, mouseForce: 120 },
+    neon: { mask: "NEON", fillText: "Glow in the dark. Electric vibes.", fontMask: "Bebas Neue", fontFill: "Raleway", layout: "center", intro: "spin", idle: "pulse", mouseFX: "gravity", scale: 100, speedX: 15, speedY: 0, bgColor: "#0d0d1a", textColor: "#ff00cc", fillSize: 16, introSpeed: 80, mouseRadius: 130, mouseForce: 100 },
+    minimal: { mask: "clean", fillText: "Less is more. Simple and elegant.", fontMask: "Inter", fontFill: "Inter", layout: "center", intro: "fade", idle: "none", mouseFX: "none", scale: 80, speedX: 5, speedY: 0, bgColor: "#fafafa", textColor: "#333333", fillSize: 10, introSpeed: 50, mouseRadius: 100, mouseForce: 100 }
+};
+
+document.getElementById('cfgPreset').addEventListener('change', e => {
+    const p = presets[e.target.value];
+    if (!p) return;
+    document.getElementById('cfgMaskText').value = p.mask;
+    document.getElementById('cfgFillText').value = p.fillText;
+    document.getElementById('cfgLayout').value = p.layout;
+    document.getElementById('cfgIntro').value = p.intro;
+    document.getElementById('cfgIdle').value = p.idle;
+    document.getElementById('cfgMouse').value = p.mouseFX;
+    document.getElementById('cfgScale').value = p.scale; document.getElementById('cfgScaleVal').value = p.scale;
+    document.getElementById('cfgSpeedX').value = p.speedX; document.getElementById('cfgSpeedXVal').value = p.speedX;
+    document.getElementById('cfgSpeedY').value = p.speedY; document.getElementById('cfgSpeedYVal').value = p.speedY;
+    document.getElementById('cfgIntroSpeed').value = p.introSpeed; document.getElementById('cfgIntroSpeedVal').value = p.introSpeed;
+    document.getElementById('cfgMouseRadius').value = p.mouseRadius; document.getElementById('cfgMouseRadiusVal').value = p.mouseRadius;
+    document.getElementById('cfgMouseForce').value = p.mouseForce; document.getElementById('cfgMouseForceVal').value = p.mouseForce;
+    document.getElementById('cfgBgColor').value = p.bgColor; document.getElementById('cfgBgColorHex').value = p.bgColor;
+    document.getElementById('cfgTextColor').value = p.textColor; document.getElementById('cfgTextColorHex').value = p.textColor;
+    document.getElementById('cfgFillSize').value = p.fillSize; document.getElementById('cfgFillSizeVal').value = p.fillSize;
+    document.getElementById('cfgBgColor')._userSet = true;
+    document.getElementById('cfgTextColor')._userSet = true;
+    if (fontPickerMask) fontPickerMask.setFont(p.fontMask);
+    if (fontPickerFill) fontPickerFill.setFont(p.fontFill);
+    const r = parseInt(p.bgColor.slice(1,3),16), g = parseInt(p.bgColor.slice(3,5),16), b = parseInt(p.bgColor.slice(5,7),16);
+    const lum = r * 0.299 + g * 0.587 + b * 0.114;
+    if (lum > 128) document.body.classList.add('light-theme'); else document.body.classList.remove('light-theme');
+    introProgress = 0; startTime = Date.now();
+    updateConfig();
+    e.target.value = '';
+});
 
 const inputs = {
     mask: document.getElementById('cfgMaskText'), mask2: document.getElementById('cfgMaskText2'),
-    fillText: document.getElementById('cfgFillText'), fontMask: document.getElementById('cfgFontMask'), fontFill: document.getElementById('cfgFontFill'),
+    fillText: document.getElementById('cfgFillText'),
     layout: document.getElementById('cfgLayout'), intro: document.getElementById('cfgIntro'),
     idle: document.getElementById('cfgIdle'), mouseFX: document.getElementById('cfgMouse')
 };
@@ -48,8 +313,8 @@ function updateConfig() {
     if (inputs.mask) config.mask = inputs.mask.value || " ";
     if (inputs.mask2) config.mask2 = inputs.mask2.value || " ";
     if (inputs.fillText) config.fillText = inputs.fillText.value;
-    if (inputs.fontMask) config.fontMask = inputs.fontMask.value;
-    if (inputs.fontFill) config.fontFill = inputs.fontFill.value;
+    config.fontMask = document.getElementById('cfgFontMask').value;
+    config.fontFill = document.getElementById('cfgFontFill').value;
     if (inputs.layout) config.layout = inputs.layout.value;
     if (inputs.intro) config.intro = inputs.intro.value;
     if (inputs.idle) config.idle = inputs.idle.value;
@@ -64,6 +329,9 @@ function updateConfig() {
     config.mouseForce = Number(document.getElementById('cfgMouseForce').value);
     config.videoThreshold = Number(document.getElementById('cfgVideoThreshold').value);
     config.objPadding = Number(document.getElementById('cfgObjPadding').value);
+    config.fillSize = Number(document.getElementById('cfgFillSize').value);
+    config.bgColor = document.getElementById('cfgBgColor').value;
+    config.textColor = document.getElementById('cfgTextColor').value;
 
     const groupWord2 = document.getElementById('groupWord2');
     if (groupWord2) { groupWord2.classList.toggle('visible', config.layout === 'center2'); }
@@ -86,9 +354,11 @@ for (const key in inputs) {
 }
 
 let uploadedImage = null;
+let isAnimatedImage = false;
 document.getElementById('cfgImage').addEventListener('change', e => {
     const file = e.target.files[0];
     if (!file) return;
+    isAnimatedImage = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
     const img = new Image();
     img.onload = () => { uploadedImage = img; if (config.layout === 'image') rebuildOnTheFly(); };
     img.src = URL.createObjectURL(file);
@@ -186,7 +456,7 @@ let maskIntervals = [];
 let maskClipPath = null;
 let maskBBoxX1 = 0, maskBBoxX2 = 0;
 let charWidths = {};
-const lineHeight = 16;
+let lineHeight = 16;
 let startTime = Date.now();
 let introProgress = 0;
 let objMask = null;
@@ -200,7 +470,8 @@ canvas.addEventListener('mousemove', e => {
 canvas.addEventListener('mouseleave', () => { if (!dragObj) { mouse.x = -1000; mouse.y = -1000; } });
 
 function initCharCache() {
-    ctx.font = `900 14px '${config.fontFill}', sans-serif`;
+    lineHeight = Math.round(config.fillSize * 1.15);
+    ctx.font = `900 ${config.fillSize}px '${config.fontFill}', sans-serif`;
     charWidths = {};
     const text = config.fillText || "SEVERYAN";
     for (const char of new Set(text + " ")) {
@@ -441,9 +712,10 @@ function buildObjMask() {
 let lastVideoRebuild = 0;
 
 function animate() {
-    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = config.bgColor;
+    ctx.fillRect(0, 0, width, height);
 
-    if (config.layout === 'video' && videoReady) {
+    if (config.layout === 'video' && videoReady || config.layout === 'image' && isAnimatedImage && uploadedImage) {
         const now = Date.now();
         if (now - lastVideoRebuild > 66) {
             lastVideoRebuild = now;
@@ -455,9 +727,12 @@ function animate() {
     if (config.intro === 'none') introProgress = 1;
     else if (introProgress < 1) { introProgress += 0.008 * introSpeedMult; if (introProgress >= 1) introProgress = 1; }
 
-    ctx.font = `900 14px '${config.fontFill}', sans-serif`;
+    ctx.font = `900 ${config.fillSize}px '${config.fontFill}', sans-serif`;
     ctx.textBaseline = 'top';
     ctx.globalAlpha = (config.intro === 'fade') ? introProgress : 1;
+    if (config.intro === 'glitch' && introProgress < 1) {
+        ctx.globalAlpha = Math.min(1, introProgress * 2.5);
+    }
 
     const ease = 1 - Math.pow(1 - introProgress, 3);
     const time = Date.now() * 0.0015;
@@ -479,6 +754,8 @@ function animate() {
 
     for (const copy of copies) {
         let yOff = needsClip ? (yPixelOffset % patternH) + copy * patternH : 0;
+        const isColumn = config.layout === 'col-single' || config.layout === 'col-narrow' || config.layout === 'col-indep';
+        const isShapeMask = needsClip && !isColumn;
         if (config.layout === 'col-indep') {
             const maxCols = Math.max(...maskIntervals.map(r => r.intervals.length));
             let cumCharIdx = Math.floor(charOffsetX);
@@ -486,15 +763,31 @@ function animate() {
                 for (let i = 0; i < maskIntervals.length; i++) {
                     const row = maskIntervals[i];
                     if (col >= row.intervals.length) continue;
-                    let renderY = row.y + yOff;
-                    if (renderY < -lineHeight || renderY > height + lineHeight) { cumCharIdx += Math.floor((row.intervals[col].end - row.intervals[col].start) / 8); continue; }
                     const interval = row.intervals[col];
-                    drawTextSegment(interval.start, interval.end, renderY, ease, time, cumCharIdx, i);
-                    cumCharIdx += Math.floor((interval.end - interval.start) / 8);
+                    let renderY = row.y + yOff;
+                    if (renderY < -lineHeight || renderY > height + lineHeight) {
+                        cumCharIdx += drawTextSegment(interval.start, interval.end, renderY, ease, time, cumCharIdx, i);
+                        continue;
+                    }
+                    cumCharIdx += drawTextSegment(interval.start, interval.end, renderY, ease, time, cumCharIdx, i);
+                }
+            }
+        } else if (isColumn) {
+            let cumCharIdx = Math.floor(charOffsetX);
+            for (let i = 0; i < maskIntervals.length; i++) {
+                const row = maskIntervals[i];
+                let renderY = row.y + yOff;
+                if (renderY < -lineHeight || renderY > height + lineHeight) {
+                    for (let j = 0; j < row.intervals.length; j++) {
+                        cumCharIdx += drawTextSegment(row.intervals[j].start, row.intervals[j].end, renderY, ease, time, cumCharIdx, i);
+                    }
+                    continue;
+                }
+                for (let j = 0; j < row.intervals.length; j++) {
+                    cumCharIdx += drawTextSegment(row.intervals[j].start, row.intervals[j].end, renderY, ease, time, cumCharIdx, i);
                 }
             }
         } else {
-            const isShapeMask = needsClip && (config.layout === 'center' || config.layout === 'center2' || config.layout === 'image');
             for (let i = 0; i < maskIntervals.length; i++) {
                 const row = maskIntervals[i];
                 let renderY = row.y + yOff;
@@ -504,9 +797,7 @@ function animate() {
                     drawTextSegment(maskBBoxX1, maskBBoxX2, renderY, ease, time, rowCharIndex, i);
                 } else {
                     for (let j = 0; j < row.intervals.length; j++) {
-                        const interval = row.intervals[j];
-                        drawTextSegment(interval.start, interval.end, renderY, ease, time, rowCharIndex, i);
-                        rowCharIndex += Math.floor((interval.end - interval.start) / 8);
+                        rowCharIndex += drawTextSegment(row.intervals[j].start, row.intervals[j].end, renderY, ease, time, rowCharIndex, i);
                     }
                 }
             }
@@ -514,6 +805,10 @@ function animate() {
     }
 
     if (needsClip) ctx.restore();
+
+    if (config.intro === 'glitch' && introProgress < 1) {
+        applyGlitchPostProcess(introProgress);
+    }
 
     for (const o of sceneObjects) {
         ctx.drawImage(o.img, o.x, o.y, o.w, o.h);
@@ -523,8 +818,75 @@ function animate() {
     requestAnimationFrame(animate);
 }
 
+function applyGlitchPostProcess(progress) {
+    const intensity = Math.pow(1 - progress, 2);
+    if (intensity < 0.01) return;
+
+    const imgData = ctx.getImageData(0, 0, width, height);
+
+    const rgbShift = Math.floor(intensity * 15 + Math.random() * intensity * 10);
+    if (rgbShift > 0) {
+        const copy = new Uint8ClampedArray(imgData.data);
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const idx = (y * width + x) * 4;
+                const srcR = Math.min(width - 1, x + rgbShift);
+                imgData.data[idx] = copy[(y * width + srcR) * 4];
+                const srcB = Math.max(0, x - rgbShift);
+                imgData.data[idx + 2] = copy[(y * width + srcB) * 4 + 2];
+            }
+        }
+    }
+
+    const numSlices = Math.floor(intensity * 8 + Math.random() * 6);
+    for (let s = 0; s < numSlices; s++) {
+        const sliceY = Math.floor(Math.random() * height);
+        const sliceH = Math.floor(Math.random() * 20 * intensity + 2);
+        const shift = Math.floor((Math.random() - 0.5) * intensity * 80);
+        if (Math.abs(shift) < 1) continue;
+        for (let y = sliceY; y < Math.min(height, sliceY + sliceH); y++) {
+            const rowStart = y * width * 4;
+            const rowCopy = new Uint8ClampedArray(width * 4);
+            rowCopy.set(imgData.data.subarray(rowStart, rowStart + width * 4));
+            for (let x = 0; x < width; x++) {
+                const srcX = x - shift;
+                const dstIdx = rowStart + x * 4;
+                if (srcX >= 0 && srcX < width) {
+                    const srcIdx = srcX * 4;
+                    imgData.data[dstIdx] = rowCopy[srcIdx];
+                    imgData.data[dstIdx + 1] = rowCopy[srcIdx + 1];
+                    imgData.data[dstIdx + 2] = rowCopy[srcIdx + 2];
+                    imgData.data[dstIdx + 3] = rowCopy[srcIdx + 3];
+                }
+            }
+        }
+    }
+
+    const scanOpacity = intensity * 0.3;
+    for (let y = 0; y < height; y += 3) {
+        for (let x = 0; x < width; x++) {
+            const idx = (y * width + x) * 4;
+            imgData.data[idx] = Math.floor(imgData.data[idx] * (1 - scanOpacity));
+            imgData.data[idx + 1] = Math.floor(imgData.data[idx + 1] * (1 - scanOpacity));
+            imgData.data[idx + 2] = Math.floor(imgData.data[idx + 2] * (1 - scanOpacity));
+        }
+    }
+
+    ctx.putImageData(imgData, 0, 0);
+
+    if (Math.random() < intensity * 0.6) {
+        ctx.save();
+        ctx.globalAlpha = intensity * 0.15;
+        ctx.fillStyle = '#ffffff';
+        const lineY = Math.floor(Math.random() * height);
+        const lineH = Math.floor(Math.random() * 4 + 1);
+        ctx.fillRect(0, lineY, width, lineH);
+        ctx.restore();
+    }
+}
+
 function drawTextSegment(startX, endX, targetY, ease, time, startIndex, rowIndex) {
-    ctx.fillStyle = config.isDark ? '#eeeeee' : '#111111';
+    ctx.fillStyle = config.textColor;
     let currentX = startX;
     let charIndex = startIndex;
     const text = config.fillText || "SEVERYAN";
@@ -562,6 +924,19 @@ function drawTextSegment(startX, endX, targetY, ease, time, startIndex, rowIndex
                 const radius = dist + Math.pow(1 - ease, 3) * 1000;
                 drawX = centerX + Math.cos(angle) * radius;
                 drawY = centerY + Math.sin(angle) * radius;
+            } else if (config.intro === 'glitch') {
+                const glitchIntensity = Math.pow(1 - ease, 2);
+                const band = Math.floor(targetY / 30);
+                const bandSeed = Math.sin(band * 45.17 + Math.floor(time * 8)) * 9999;
+                const bandShift = (bandSeed - Math.floor(bandSeed) - 0.5) * 2;
+                drawX = currentX + bandShift * glitchIntensity * 60;
+                const vJitter = Math.sin(seed * 33.33 + Math.floor(time * 12)) * glitchIntensity * 15;
+                drawY = targetY + vJitter;
+                if (Math.random() < glitchIntensity * 0.3) {
+                    currentX += charW;
+                    charIndex++;
+                    continue;
+                }
             }
 
             let idleX = 0, idleY = 0;
@@ -622,12 +997,12 @@ function drawTextSegment(startX, endX, targetY, ease, time, startIndex, rowIndex
         currentX += charW;
         charIndex++;
     }
+    return charIndex - startIndex;
 }
 
 const exportModal = document.getElementById('exportModal');
 const exportCode = document.getElementById('exportCode');
 
-// Open modal
 document.getElementById('exportOpenBtn').addEventListener('click', () => {
     exportCode.value = generateExportHTML();
     exportModal.classList.add('active');
@@ -635,7 +1010,6 @@ document.getElementById('exportOpenBtn').addEventListener('click', () => {
 document.getElementById('modalClose').addEventListener('click', () => exportModal.classList.remove('active'));
 exportModal.addEventListener('click', e => { if (e.target === exportModal) exportModal.classList.remove('active'); });
 
-// Tabs
 document.querySelectorAll('.export-tab').forEach(tab => {
     tab.addEventListener('click', () => {
         document.querySelectorAll('.export-tab').forEach(t => t.classList.remove('active'));
@@ -645,7 +1019,6 @@ document.querySelectorAll('.export-tab').forEach(tab => {
     });
 });
 
-// Code export buttons
 document.getElementById('copyCodeBtn').addEventListener('click', () => {
     exportCode.select();
     navigator.clipboard.writeText(exportCode.value);
@@ -663,7 +1036,6 @@ document.getElementById('downloadHtmlBtn').addEventListener('click', () => {
     URL.revokeObjectURL(a.href);
 });
 
-// === GIF EXPORT ===
 let gifWorkerUrl = null;
 fetch('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js')
     .then(r => r.text())
@@ -684,7 +1056,6 @@ document.getElementById('gifBtn').addEventListener('click', async () => {
     progressFill.style.width = '0%';
     progressText.textContent = 'Подготовка...';
 
-    // Close modal so canvas is visible for capture
     exportModal.classList.remove('active');
 
     if (!gifWorkerUrl) {
@@ -716,7 +1087,6 @@ document.getElementById('gifBtn').addEventListener('click', async () => {
     const frames = [];
     let framesCaptured = 0;
 
-    // Small delay to let modal close & canvas render
     await new Promise(r => setTimeout(r, 100));
 
     function captureFrame() {
@@ -736,9 +1106,7 @@ document.getElementById('gifBtn').addEventListener('click', async () => {
         if (i < totalFrames - 1) await new Promise(r => setTimeout(r, delay));
     }
 
-    // Re-open modal to show encoding progress
     exportModal.classList.add('active');
-    // Switch to GIF tab
     document.querySelectorAll('.export-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.export-tab-content').forEach(c => c.classList.remove('active'));
     document.querySelector('.export-tab[data-tab="gif"]').classList.add('active');
@@ -792,8 +1160,8 @@ function getImageBase64(img) {
 }
 
 function generateExportHTML() {
-    const bg = config.isDark ? '#111' : '#ffffff';
-    const fg = config.isDark ? '#eeeeee' : '#111111';
+    const bg = config.bgColor;
+    const fg = config.textColor;
     const imgB64 = config.layout === 'image' ? getImageBase64(uploadedImage) : null;
     const vidB64 = config.layout === 'video' ? videoBase64 : null;
 
@@ -807,7 +1175,8 @@ function generateExportHTML() {
         intro: config.intro, idle: config.idle, mouseFX: config.mouseFX,
         scale: config.scale, scale2: config.scale2,
         introSpeed: config.introSpeed, speedX: config.speedX, speedY: config.speedY,
-        isDark: config.isDark, mouseRadius: config.mouseRadius, mouseForce: config.mouseForce,
+        bgColor: bg, textColor: fg, fillSize: config.fillSize,
+        mouseRadius: config.mouseRadius, mouseForce: config.mouseForce,
         videoThreshold: config.videoThreshold, objPadding: config.objPadding,
         imgData: imgB64, videoData: vidB64, objects: objsData
     }, null, 2);
@@ -831,7 +1200,7 @@ canvas { display: block; width: 100vw; height: 100vh; }
 var cfg = ${cfgStr};
 var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext("2d", { willReadFrequently: true });
-var W, H, maskI = [], clipP = null, cW = {}, LH = 16, bbX1 = 0, bbX2 = 0;
+var W, H, maskI = [], clipP = null, cW = {}, LH = Math.round((cfg.fillSize || 14) * 1.15), bbX1 = 0, bbX2 = 0;
 var startT = Date.now(), introP = 0;
 var mouse = { x: -1000, y: -1000, radius: cfg.mouseRadius };
 var scObjs = [], objM = null;
@@ -842,7 +1211,7 @@ canvas.addEventListener("mousemove", function(e) {
 canvas.addEventListener("mouseleave", function() { mouse.x = -1000; mouse.y = -1000; });
 
 function initCC() {
-    ctx.font = "900 14px '" + cfg.fontFill + "', sans-serif"; cW = {};
+    ctx.font = "900 " + (cfg.fillSize || 14) + "px '" + cfg.fontFill + "', sans-serif"; cW = {};
     var t = cfg.fillText || "SEVERYAN", chars = Array.from(new Set(t + " "));
     for (var i = 0; i < chars.length; i++) cW[chars[i]] = ctx.measureText(chars[i]).width;
 }
@@ -973,8 +1342,39 @@ function createMask() {
 }
 
 var lastVidRebuild = 0;
+function applyGlitchPP(progress) {
+    var intensity = Math.pow(1 - progress, 2);
+    if (intensity < 0.01) return;
+    var imgData = ctx.getImageData(0, 0, W, H);
+    var rgbS = Math.floor(intensity * 15 + Math.random() * intensity * 10);
+    if (rgbS > 0) {
+        var cp = new Uint8ClampedArray(imgData.data);
+        for (var y = 0; y < H; y++) { for (var x = 0; x < W; x++) {
+            var idx = (y * W + x) * 4;
+            var sR = Math.min(W - 1, x + rgbS); imgData.data[idx] = cp[(y * W + sR) * 4];
+            var sB = Math.max(0, x - rgbS); imgData.data[idx + 2] = cp[(y * W + sB) * 4 + 2];
+        } }
+    }
+    var nS = Math.floor(intensity * 8 + Math.random() * 6);
+    for (var s = 0; s < nS; s++) {
+        var sY = Math.floor(Math.random() * H), sH = Math.floor(Math.random() * 20 * intensity + 2);
+        var sh = Math.floor((Math.random() - 0.5) * intensity * 80);
+        if (Math.abs(sh) < 1) continue;
+        for (var y = sY; y < Math.min(H, sY + sH); y++) {
+            var rS = y * W * 4, rC = new Uint8ClampedArray(W * 4);
+            rC.set(imgData.data.subarray(rS, rS + W * 4));
+            for (var x = 0; x < W; x++) { var srcX = x - sh, di = rS + x * 4;
+                if (srcX >= 0 && srcX < W) { var si2 = srcX * 4; imgData.data[di]=rC[si2]; imgData.data[di+1]=rC[si2+1]; imgData.data[di+2]=rC[si2+2]; imgData.data[di+3]=rC[si2+3]; } } } }
+    var scO = intensity * 0.3;
+    for (var y = 0; y < H; y += 3) { for (var x = 0; x < W; x++) { var idx = (y*W+x)*4;
+        imgData.data[idx]=Math.floor(imgData.data[idx]*(1-scO)); imgData.data[idx+1]=Math.floor(imgData.data[idx+1]*(1-scO)); imgData.data[idx+2]=Math.floor(imgData.data[idx+2]*(1-scO)); } }
+    ctx.putImageData(imgData, 0, 0);
+    if (Math.random() < intensity * 0.6) { ctx.save(); ctx.globalAlpha = intensity * 0.15; ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, Math.floor(Math.random()*H), W, Math.floor(Math.random()*4+1)); ctx.restore(); }
+}
 function animate() {
-    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = cfg.bgColor || "#ffffff";
+    ctx.fillRect(0, 0, W, H);
     if (cfg.layout === "video" && vidReady) {
         var now = Date.now();
         if (now - lastVidRebuild > 66) { lastVidRebuild = now; createMask(); }
@@ -982,8 +1382,9 @@ function animate() {
     var introSM = cfg.introSpeed / 100;
     if (cfg.intro === "none") introP = 1;
     else if (introP < 1) { introP += 0.008 * introSM; if (introP >= 1) introP = 1; }
-    ctx.font = "900 14px '" + cfg.fontFill + "', sans-serif"; ctx.textBaseline = "top";
+    ctx.font = "900 " + (cfg.fillSize || 14) + "px '" + cfg.fontFill + "', sans-serif"; ctx.textBaseline = "top";
     ctx.globalAlpha = (cfg.intro === "fade") ? introP : 1;
+    if (cfg.intro === "glitch" && introP < 1) ctx.globalAlpha = Math.min(1, introP * 2.5);
     var ease = 1 - Math.pow(1 - introP, 3), time = Date.now() * 0.0015;
     var cOX = (Date.now() - startT) * 0.01 * (cfg.speedX / 15);
     var yOff = 0, needClip = cfg.speedY !== 0 && clipP;
@@ -994,18 +1395,22 @@ function animate() {
     var copies = needClip ? [-1, 0, 1] : [0];
     for (var c = 0; c < copies.length; c++) {
         var yS = needClip ? (yOff % pH) + copies[c] * pH : 0;
+        var isCol = cfg.layout === "col-single" || cfg.layout === "col-narrow" || cfg.layout === "col-indep";
+        var isSM = needClip && !isCol;
         if (cfg.layout === "col-indep") {
             var mxC = 0; for (var mi = 0; mi < maskI.length; mi++) mxC = Math.max(mxC, maskI[mi].intervals.length);
             var cumCI = Math.floor(cOX);
             for (var col = 0; col < mxC; col++) { for (var i = 0; i < maskI.length; i++) {
                 var row = maskI[i]; if (col >= row.intervals.length) continue;
                 var rY = row.y + yS; var iv = row.intervals[col];
-                if (rY < -LH || rY > H + LH) { cumCI += Math.floor((iv.end - iv.start) / 8); continue; }
-                drawSeg(iv.start, iv.end, rY, ease, time, cumCI, i);
-                cumCI += Math.floor((iv.end - iv.start) / 8);
+                cumCI += drawSeg(iv.start, iv.end, rY, ease, time, cumCI, i);
             } }
+        } else if (isCol) {
+            var cumCI = Math.floor(cOX);
+            for (var i = 0; i < maskI.length; i++) { var row = maskI[i], rY = row.y + yS;
+                for (var j = 0; j < row.intervals.length; j++) { cumCI += drawSeg(row.intervals[j].start, row.intervals[j].end, rY, ease, time, cumCI, i); }
+            }
         } else {
-            var isSM = needClip && (cfg.layout === "center" || cfg.layout === "center2" || cfg.layout === "image");
             for (var i = 0; i < maskI.length; i++) {
                 var row = maskI[i], rY = row.y + yS;
                 if (rY < -LH || rY > H + LH) continue;
@@ -1013,22 +1418,20 @@ function animate() {
                 if (isSM) {
                     drawSeg(bbX1, bbX2, rY, ease, time, rCI, i);
                 } else {
-                    for (var j = 0; j < row.intervals.length; j++) {
-                        var iv = row.intervals[j]; drawSeg(iv.start, iv.end, rY, ease, time, rCI, i);
-                        rCI += Math.floor((iv.end - iv.start) / 8);
-                    }
+                    for (var j = 0; j < row.intervals.length; j++) { rCI += drawSeg(row.intervals[j].start, row.intervals[j].end, rY, ease, time, rCI, i); }
                 }
             }
         }
     }
     if (needClip) ctx.restore();
+    if (cfg.intro === "glitch" && introP < 1) applyGlitchPP(introP);
     for (var oi = 0; oi < scObjs.length; oi++) { var ob = scObjs[oi]; ctx.drawImage(ob.img, ob.x, ob.y, ob.w, ob.h); }
     ctx.globalAlpha = 1;
     requestAnimationFrame(animate);
 }
 
 function drawSeg(sX, eX, tY, ease, time, sIdx, rIdx) {
-    ctx.fillStyle = "${fg}";
+    ctx.fillStyle = cfg.textColor || "#111111";
     var cX = sX, cIdx = sIdx, text = cfg.fillText || "SEVERYAN", tL = text.length;
     var cenX = W / 2, cenY = H / 2, fM = cfg.mouseForce / 100;
     while (cX < eX) {
@@ -1043,7 +1446,16 @@ function drawSeg(sX, eX, tY, ease, time, sIdx, rIdx) {
                 dX = t1*t1*cenX+2*t1*t*ctX+t*t*cX; dY = t1*t1*cenY+2*t1*t*ctY+t*t*tY;
             } else if (cfg.intro === "tape") { dX = cX+(1-ease)*(-W); dY = tY+Math.sin(cX*0.01+ease*10)*(1-ease)*200;
             } else if (cfg.intro === "drop") { dY = tY-Math.pow(1-ease,2)*(H+200);
-            } else if (cfg.intro === "spin") { var dx=cX-cenX,dy=tY-cenY,dist=Math.sqrt(dx*dx+dy*dy); var angle=Math.atan2(dy,dx)+(1-ease)*10,radius=dist+Math.pow(1-ease,3)*1000; dX=cenX+Math.cos(angle)*radius; dY=cenY+Math.sin(angle)*radius; }
+            } else if (cfg.intro === "spin") { var dx=cX-cenX,dy=tY-cenY,dist=Math.sqrt(dx*dx+dy*dy); var angle=Math.atan2(dy,dx)+(1-ease)*10,radius=dist+Math.pow(1-ease,3)*1000; dX=cenX+Math.cos(angle)*radius; dY=cenY+Math.sin(angle)*radius;
+            } else if (cfg.intro === "glitch") {
+                var gI = Math.pow(1-ease,2), band = Math.floor(tY/30);
+                var bSeed = Math.sin(band*45.17+Math.floor(time*8))*9999;
+                var bShift = (bSeed-Math.floor(bSeed)-0.5)*2;
+                dX = cX + bShift*gI*60;
+                var vJ = Math.sin(seed*33.33+Math.floor(time*12))*gI*15;
+                dY = tY + vJ;
+                if (Math.random() < gI*0.3) { cX += chW; cIdx++; continue; }
+            }
             var iX=0,iY=0;
             if (cfg.idle==="wave") { iX=Math.cos(time+cX*0.01)*1.5*ease; iY=Math.sin(time+cX*0.015)*3*ease;
             } else if (cfg.idle==="pulse") { var pdx=cX-W/2,pdy=tY-H/2,pd=Math.sqrt(pdx*pdx+pdy*pdy); var pw=Math.sin(time*3-pd*0.01)*3*ease; iX=pd>0?(pdx/pd)*pw:0; iY=pd>0?(pdy/pd)*pw:0;
@@ -1061,6 +1473,7 @@ function drawSeg(sX, eX, tY, ease, time, sIdx, rIdx) {
         }
         cX += chW; cIdx++;
     }
+    return cIdx - sIdx;
 }
 
 loadAssets(function() { document.fonts.ready.then(function() { resize(); animate(); }); });
@@ -1068,6 +1481,9 @@ loadAssets(function() { document.fonts.ready.then(function() { resize(); animate
 </body>
 </html>`;
 }
+
+fontPickerMask = new FontPicker('fontPickerMask', 'cfgFontMask', 'Manrope');
+fontPickerFill = new FontPicker('fontPickerFill', 'cfgFontFill', 'Manrope');
 
 document.fonts.ready.then(() => {
     updateConfig();
