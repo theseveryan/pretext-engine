@@ -1,9 +1,11 @@
 const config = {
     mask: "SEVERYAN", mask2: "CODE", fillText: "", fontMask: "Manrope", fontFill: "Manrope", layout: "center",
-    intro: "explosion", idle: "wave", mouseFX: "repel",
-    scale: 100, scale2: 80, introSpeed: 100, speedX: 30, speedY: 0,
+    intro: "explosion", idle: "wave", outro: "none", mouseFX: "repel",
+    scale: 100, scale2: 80, speedX: 30, speedY: 0,
+    gapDur: 0.5, introDur: 2, mainDur: 3, outroDur: 2,
+    introReverse: false, outroReverse: false,
     mouseRadius: 100, mouseForce: 100, videoThreshold: 50, objPadding: 15,
-    bgColor: "#ffffff", textColor: "#111111", fillSize: 14
+    bgColor: "#ffffff", textColor: "#111111", fillSize: 14, glitchColor: "#ff0040"
 };
 
 document.getElementById('sidebarToggle').addEventListener('click', () => {
@@ -44,7 +46,10 @@ function syncSlider(sliderId, inputId) {
 }
 syncSlider('cfgScale', 'cfgScaleVal');
 syncSlider('cfgScale2', 'cfgScaleVal2');
-syncSlider('cfgIntroSpeed', 'cfgIntroSpeedVal');
+syncSlider('cfgGapDur', 'cfgGapDurVal');
+syncSlider('cfgIntroDur', 'cfgIntroDurVal');
+syncSlider('cfgMainDur', 'cfgMainDurVal');
+syncSlider('cfgOutroDur', 'cfgOutroDurVal');
 syncSlider('cfgSpeedX', 'cfgSpeedXVal');
 syncSlider('cfgSpeedY', 'cfgSpeedYVal');
 syncSlider('cfgMouseRadius', 'cfgMouseRadiusVal');
@@ -61,6 +66,9 @@ function syncColor(colorId, hexId, configKey) {
 }
 syncColor('cfgBgColor', 'cfgBgColorHex', 'bgColor');
 syncColor('cfgTextColor', 'cfgTextColorHex', 'textColor');
+syncColor('cfgGlitchColor', 'cfgGlitchColorHex', 'glitchColor');
+document.getElementById('cfgIntroReverse').addEventListener('change', updateConfig);
+document.getElementById('cfgOutroReverse').addEventListener('change', updateConfig);
 
 const FONT_CATALOG = [
     { name: 'Inter', cat: 'Sans-serif' },
@@ -263,12 +271,12 @@ class FontPicker {
 let fontPickerMask, fontPickerFill;
 
 const presets = {
-    hero: { mask: "HELLO", fillText: "Welcome to the future of design.", fontMask: "Bebas Neue", fontFill: "Inter", layout: "center", intro: "explosion", idle: "wave", mouseFX: "repel", scale: 100, speedX: 20, speedY: 0, bgColor: "#0a0a0a", textColor: "#ffffff", fillSize: 14, introSpeed: 100, mouseRadius: 120, mouseForce: 100 },
-    newspaper: { mask: "NEWS", fillText: "Breaking news from around the world. Stay informed with the latest updates and stories that matter most to you and your community.", fontMask: "Playfair Display", fontFill: "Roboto", layout: "col-indep", intro: "fade", idle: "none", mouseFX: "repel", scale: 100, speedX: 0, speedY: 5, bgColor: "#f5f0e8", textColor: "#222222", fillSize: 11, introSpeed: 80, mouseRadius: 80, mouseForce: 60 },
-    matrix: { mask: "MATRIX", fillText: "01001010 11010010 00101101 10110100", fontMask: "Oswald", fontFill: "Courier New", layout: "center", intro: "drop", idle: "glitch", mouseFX: "repel", scale: 100, speedX: 0, speedY: -40, bgColor: "#000000", textColor: "#00ff41", fillSize: 12, introSpeed: 60, mouseRadius: 100, mouseForce: 150 },
-    liquid: { mask: "LIQUID", fillText: "Flow and motion design elements.", fontMask: "Montserrat", fontFill: "Manrope", layout: "center", intro: "tape", idle: "liquid", mouseFX: "vortex", scale: 100, speedX: 10, speedY: 0, bgColor: "#1a0033", textColor: "#cc88ff", fillSize: 14, introSpeed: 120, mouseRadius: 150, mouseForce: 120 },
-    neon: { mask: "NEON", fillText: "Glow in the dark. Electric vibes.", fontMask: "Bebas Neue", fontFill: "Raleway", layout: "center", intro: "spin", idle: "pulse", mouseFX: "gravity", scale: 100, speedX: 15, speedY: 0, bgColor: "#0d0d1a", textColor: "#ff00cc", fillSize: 16, introSpeed: 80, mouseRadius: 130, mouseForce: 100 },
-    minimal: { mask: "clean", fillText: "Less is more. Simple and elegant.", fontMask: "Inter", fontFill: "Inter", layout: "center", intro: "fade", idle: "none", mouseFX: "none", scale: 80, speedX: 5, speedY: 0, bgColor: "#fafafa", textColor: "#333333", fillSize: 10, introSpeed: 50, mouseRadius: 100, mouseForce: 100 }
+    hero: { mask: "HELLO", fillText: "Welcome to the future of design.", fontMask: "Bebas Neue", fontFill: "Inter", layout: "center", intro: "explosion", idle: "wave", outro: "none", mouseFX: "repel", scale: 100, speedX: 20, speedY: 0, bgColor: "#0a0a0a", textColor: "#ffffff", fillSize: 14, gapDur: 0.5, introDur: 2, mainDur: 4, outroDur: 2, mouseRadius: 120, mouseForce: 100 },
+    newspaper: { mask: "NEWS", fillText: "Breaking news from around the world. Stay informed with the latest updates and stories that matter most to you and your community.", fontMask: "Playfair Display", fontFill: "Roboto", layout: "col-indep", intro: "fade", idle: "none", outro: "fade", mouseFX: "repel", scale: 100, speedX: 0, speedY: 5, bgColor: "#f5f0e8", textColor: "#222222", fillSize: 11, gapDur: 0.3, introDur: 1.5, mainDur: 5, outroDur: 1.5, mouseRadius: 80, mouseForce: 60 },
+    matrix: { mask: "MATRIX", fillText: "01001010 11010010 00101101 10110100", fontMask: "Oswald", fontFill: "Courier New", layout: "center", intro: "glitch-slam", idle: "glitch", outro: "glitch-slam", mouseFX: "repel", scale: 100, speedX: 0, speedY: -40, bgColor: "#000000", textColor: "#00ff41", glitchColor: "#00ff41", fillSize: 12, gapDur: 1, introDur: 2.5, mainDur: 3, outroDur: 2, mouseRadius: 100, mouseForce: 150 },
+    liquid: { mask: "LIQUID", fillText: "Flow and motion design elements.", fontMask: "Montserrat", fontFill: "Manrope", layout: "center", intro: "tape", idle: "liquid", outro: "fade", mouseFX: "vortex", scale: 100, speedX: 10, speedY: 0, bgColor: "#1a0033", textColor: "#cc88ff", fillSize: 14, gapDur: 0.5, introDur: 2, mainDur: 4, outroDur: 2, mouseRadius: 150, mouseForce: 120 },
+    neon: { mask: "NEON", fillText: "Glow in the dark. Electric vibes.", fontMask: "Bebas Neue", fontFill: "Raleway", layout: "center", intro: "spin", idle: "pulse", outro: "spin", mouseFX: "gravity", scale: 100, speedX: 15, speedY: 0, bgColor: "#0d0d1a", textColor: "#ff00cc", fillSize: 16, gapDur: 0.5, introDur: 2, mainDur: 3, outroDur: 2, mouseRadius: 130, mouseForce: 100 },
+    minimal: { mask: "clean", fillText: "Less is more. Simple and elegant.", fontMask: "Inter", fontFill: "Inter", layout: "center", intro: "fade", idle: "none", outro: "fade", mouseFX: "none", scale: 80, speedX: 5, speedY: 0, bgColor: "#fafafa", textColor: "#333333", fillSize: 10, gapDur: 0.5, introDur: 3, mainDur: 4, outroDur: 2, mouseRadius: 100, mouseForce: 100 }
 };
 
 document.getElementById('cfgPreset').addEventListener('change', e => {
@@ -279,16 +287,23 @@ document.getElementById('cfgPreset').addEventListener('change', e => {
     document.getElementById('cfgLayout').value = p.layout;
     document.getElementById('cfgIntro').value = p.intro;
     document.getElementById('cfgIdle').value = p.idle;
+    document.getElementById('cfgOutro').value = p.outro;
     document.getElementById('cfgMouse').value = p.mouseFX;
     document.getElementById('cfgScale').value = p.scale; document.getElementById('cfgScaleVal').value = p.scale;
     document.getElementById('cfgSpeedX').value = p.speedX; document.getElementById('cfgSpeedXVal').value = p.speedX;
     document.getElementById('cfgSpeedY').value = p.speedY; document.getElementById('cfgSpeedYVal').value = p.speedY;
-    document.getElementById('cfgIntroSpeed').value = p.introSpeed; document.getElementById('cfgIntroSpeedVal').value = p.introSpeed;
+    document.getElementById('cfgGapDur').value = p.gapDur; document.getElementById('cfgGapDurVal').value = p.gapDur;
+    document.getElementById('cfgIntroDur').value = p.introDur; document.getElementById('cfgIntroDurVal').value = p.introDur;
+    document.getElementById('cfgMainDur').value = p.mainDur; document.getElementById('cfgMainDurVal').value = p.mainDur;
+    document.getElementById('cfgOutroDur').value = p.outroDur; document.getElementById('cfgOutroDurVal').value = p.outroDur;
     document.getElementById('cfgMouseRadius').value = p.mouseRadius; document.getElementById('cfgMouseRadiusVal').value = p.mouseRadius;
     document.getElementById('cfgMouseForce').value = p.mouseForce; document.getElementById('cfgMouseForceVal').value = p.mouseForce;
     document.getElementById('cfgBgColor').value = p.bgColor; document.getElementById('cfgBgColorHex').value = p.bgColor;
     document.getElementById('cfgTextColor').value = p.textColor; document.getElementById('cfgTextColorHex').value = p.textColor;
     document.getElementById('cfgFillSize').value = p.fillSize; document.getElementById('cfgFillSizeVal').value = p.fillSize;
+    if (p.glitchColor) { document.getElementById('cfgGlitchColor').value = p.glitchColor; document.getElementById('cfgGlitchColorHex').value = p.glitchColor; }
+    document.getElementById('cfgIntroReverse').checked = !!p.introReverse;
+    document.getElementById('cfgOutroReverse').checked = !!p.outroReverse;
     document.getElementById('cfgBgColor')._userSet = true;
     document.getElementById('cfgTextColor')._userSet = true;
     if (fontPickerMask) fontPickerMask.setFont(p.fontMask);
@@ -296,7 +311,7 @@ document.getElementById('cfgPreset').addEventListener('change', e => {
     const r = parseInt(p.bgColor.slice(1,3),16), g = parseInt(p.bgColor.slice(3,5),16), b = parseInt(p.bgColor.slice(5,7),16);
     const lum = r * 0.299 + g * 0.587 + b * 0.114;
     if (lum > 128) document.body.classList.add('light-theme'); else document.body.classList.remove('light-theme');
-    introProgress = 0; startTime = Date.now();
+    resetAnimation();
     updateConfig();
     e.target.value = '';
 });
@@ -305,11 +320,14 @@ const inputs = {
     mask: document.getElementById('cfgMaskText'), mask2: document.getElementById('cfgMaskText2'),
     fillText: document.getElementById('cfgFillText'),
     layout: document.getElementById('cfgLayout'), intro: document.getElementById('cfgIntro'),
-    idle: document.getElementById('cfgIdle'), mouseFX: document.getElementById('cfgMouse')
+    idle: document.getElementById('cfgIdle'), outro: document.getElementById('cfgOutro'),
+    mouseFX: document.getElementById('cfgMouse')
 };
+
 
 function updateConfig() {
     const prevIntro = config.intro;
+    const prevOutro = config.outro;
     if (inputs.mask) config.mask = inputs.mask.value || " ";
     if (inputs.mask2) config.mask2 = inputs.mask2.value || " ";
     if (inputs.fillText) config.fillText = inputs.fillText.value;
@@ -318,11 +336,15 @@ function updateConfig() {
     if (inputs.layout) config.layout = inputs.layout.value;
     if (inputs.intro) config.intro = inputs.intro.value;
     if (inputs.idle) config.idle = inputs.idle.value;
+    if (inputs.outro) config.outro = inputs.outro.value;
     if (inputs.mouseFX) config.mouseFX = inputs.mouseFX.value;
 
     config.scale = Number(document.getElementById('cfgScale').value);
     config.scale2 = Number(document.getElementById('cfgScale2').value);
-    config.introSpeed = Number(document.getElementById('cfgIntroSpeed').value);
+    config.gapDur = Number(document.getElementById('cfgGapDur').value);
+    config.introDur = Number(document.getElementById('cfgIntroDur').value);
+    config.mainDur = Number(document.getElementById('cfgMainDur').value);
+    config.outroDur = Number(document.getElementById('cfgOutroDur').value);
     config.speedX = Number(document.getElementById('cfgSpeedX').value);
     config.speedY = Number(document.getElementById('cfgSpeedY').value);
     config.mouseRadius = Number(document.getElementById('cfgMouseRadius').value);
@@ -332,6 +354,9 @@ function updateConfig() {
     config.fillSize = Number(document.getElementById('cfgFillSize').value);
     config.bgColor = document.getElementById('cfgBgColor').value;
     config.textColor = document.getElementById('cfgTextColor').value;
+    config.glitchColor = document.getElementById('cfgGlitchColor').value;
+    config.introReverse = document.getElementById('cfgIntroReverse').checked;
+    config.outroReverse = document.getElementById('cfgOutroReverse').checked;
 
     const groupWord2 = document.getElementById('groupWord2');
     if (groupWord2) { groupWord2.classList.toggle('visible', config.layout === 'center2'); }
@@ -343,7 +368,7 @@ function updateConfig() {
     if (groupThreshold) { groupThreshold.classList.toggle('visible', config.layout === 'image' || config.layout === 'video'); }
 
     if (typeof rebuildOnTheFly === 'function') rebuildOnTheFly();
-    if (prevIntro !== config.intro) { introProgress = 0; startTime = Date.now(); }
+    if (prevIntro !== config.intro || prevOutro !== config.outro) resetAnimation();
 }
 
 for (const key in inputs) {
@@ -459,7 +484,20 @@ let charWidths = {};
 let lineHeight = 16;
 let startTime = Date.now();
 let introProgress = 0;
+let outroProgress = 0;
+let animPhase = 'gap'; // 'gap' | 'intro' | 'main' | 'outro'
+let phaseStart = Date.now();
+let currentAnimType = 'explosion'; // which intro/outro effect is active
 let objMask = null;
+
+function resetAnimation(now) {
+    const t = now || Date.now();
+    animPhase = (config.gapDur > 0) ? 'gap' : 'intro';
+    introProgress = 0;
+    outroProgress = 0;
+    phaseStart = t;
+    startTime = t;
+}
 
 let mouse = { x: -1000, y: -1000, radius: 100 };
 canvas.addEventListener('mousemove', e => {
@@ -710,37 +748,69 @@ function buildObjMask() {
 }
 
 let lastVideoRebuild = 0;
+let animFrameId = null;
 
-function animate() {
+function renderScene(now) {
     ctx.fillStyle = config.bgColor;
     ctx.fillRect(0, 0, width, height);
 
+    // During gap phase — only background + scene objects, no text
+    if (animPhase === 'gap') {
+        for (const o of sceneObjects) { ctx.drawImage(o.img, o.x, o.y, o.w, o.h); }
+        return;
+    }
+
     if (config.layout === 'video' && videoReady || config.layout === 'image' && isAnimatedImage && uploadedImage) {
-        const now = Date.now();
         if (now - lastVideoRebuild > 66) {
             lastVideoRebuild = now;
             createMask();
         }
     }
 
-    let introSpeedMult = config.introSpeed / 100;
-    if (config.intro === 'none') introProgress = 1;
-    else if (introProgress < 1) { introProgress += 0.008 * introSpeedMult; if (introProgress >= 1) introProgress = 1; }
-
     ctx.font = `900 ${config.fillSize}px '${config.fontFill}', sans-serif`;
     ctx.textBaseline = 'top';
-    ctx.globalAlpha = (config.intro === 'fade') ? introProgress : 1;
-    if (config.intro === 'glitch' && introProgress < 1) {
-        ctx.globalAlpha = Math.min(1, introProgress * 2.5);
+
+    // Compute ease based on current phase
+    let ease, glitchPP = false;
+    if (animPhase === 'intro') {
+        currentAnimType = config.intro;
+        let rawP = introProgress;
+        // Reverse: intro plays as if it's an outro (1→0 direction)
+        if (config.introReverse) rawP = 1 - rawP;
+        ease = 1 - Math.pow(1 - rawP, 3);
+        ctx.globalAlpha = (config.intro === 'fade') ? rawP : 1;
+        if ((config.intro === 'glitch' || config.intro === 'glitch-slam') && introProgress < 1) {
+            ctx.globalAlpha = Math.min(1, rawP * 2.5);
+            glitchPP = config.intro === 'glitch';
+        }
+    } else if (animPhase === 'outro') {
+        currentAnimType = config.outro;
+        let rawP = outroProgress;
+        // Normal outro: ease goes 1→0; Reverse: ease goes 0→1
+        if (config.outroReverse) {
+            ease = 1 - Math.pow(1 - rawP, 3);
+            ctx.globalAlpha = (config.outro === 'fade') ? rawP : 1;
+        } else {
+            const outroEased = 1 - Math.pow(1 - rawP, 3);
+            ease = 1 - outroEased;
+            ctx.globalAlpha = (config.outro === 'fade') ? (1 - rawP) : 1;
+        }
+        if ((config.outro === 'glitch' || config.outro === 'glitch-slam') && rawP < 1) {
+            ctx.globalAlpha = config.outroReverse ? Math.min(1, rawP * 2.5) : Math.min(1, (1 - rawP) * 2.5);
+            glitchPP = config.outro === 'glitch';
+        }
+    } else {
+        currentAnimType = 'none';
+        ease = 1;
+        ctx.globalAlpha = 1;
     }
 
-    const ease = 1 - Math.pow(1 - introProgress, 3);
-    const time = Date.now() * 0.0015;
-    let charOffsetX = (Date.now() - startTime) * 0.01 * (config.speedX / 15);
+    const time = now * 0.0015;
+    let charOffsetX = (now - startTime) * 0.01 * (config.speedX / 15);
 
     let yPixelOffset = 0;
     let needsClip = config.speedY !== 0 && maskClipPath;
-    if (config.speedY !== 0) yPixelOffset = (Date.now() - startTime) * 0.15 * (config.speedY / 15);
+    if (config.speedY !== 0) yPixelOffset = (now - startTime) * 0.15 * (config.speedY / 15);
 
     mouse.radius = config.mouseRadius;
 
@@ -765,10 +835,6 @@ function animate() {
                     if (col >= row.intervals.length) continue;
                     const interval = row.intervals[col];
                     let renderY = row.y + yOff;
-                    if (renderY < -lineHeight || renderY > height + lineHeight) {
-                        cumCharIdx += drawTextSegment(interval.start, interval.end, renderY, ease, time, cumCharIdx, i);
-                        continue;
-                    }
                     cumCharIdx += drawTextSegment(interval.start, interval.end, renderY, ease, time, cumCharIdx, i);
                 }
             }
@@ -777,12 +843,6 @@ function animate() {
             for (let i = 0; i < maskIntervals.length; i++) {
                 const row = maskIntervals[i];
                 let renderY = row.y + yOff;
-                if (renderY < -lineHeight || renderY > height + lineHeight) {
-                    for (let j = 0; j < row.intervals.length; j++) {
-                        cumCharIdx += drawTextSegment(row.intervals[j].start, row.intervals[j].end, renderY, ease, time, cumCharIdx, i);
-                    }
-                    continue;
-                }
                 for (let j = 0; j < row.intervals.length; j++) {
                     cumCharIdx += drawTextSegment(row.intervals[j].start, row.intervals[j].end, renderY, ease, time, cumCharIdx, i);
                 }
@@ -806,8 +866,13 @@ function animate() {
 
     if (needsClip) ctx.restore();
 
-    if (config.intro === 'glitch' && introProgress < 1) {
-        applyGlitchPostProcess(introProgress);
+    // Glitch post-process for both glitch and glitch-slam
+    const isGlitchType = currentAnimType === 'glitch' || currentAnimType === 'glitch-slam';
+    if (isGlitchType && ((animPhase === 'intro' && introProgress < 1) || (animPhase === 'outro' && outroProgress < 1))) {
+        const gpProgress = animPhase === 'intro' ? introProgress : outroProgress;
+        const gpDir = (animPhase === 'intro' && !config.introReverse) || (animPhase === 'outro' && config.outroReverse);
+        const gpVal = gpDir ? gpProgress : (1 - gpProgress);
+        applyGlitchPostProcess(gpVal, currentAnimType === 'glitch-slam');
     }
 
     for (const o of sceneObjects) {
@@ -815,16 +880,81 @@ function animate() {
     }
 
     ctx.globalAlpha = 1;
-    requestAnimationFrame(animate);
 }
 
-function applyGlitchPostProcess(progress) {
-    const intensity = Math.pow(1 - progress, 2);
+function getTotalCycleDur() {
+    let total = config.mainDur + (config.gapDur || 0);
+    if (config.intro !== 'none') total += config.introDur;
+    if (config.outro !== 'none') total += config.outroDur;
+    return Math.max(0.5, total);
+}
+
+function advancePhase(now) {
+    const elapsed = (now - phaseStart) / 1000;
+
+    if (animPhase === 'gap') {
+        if (elapsed >= (config.gapDur || 0)) {
+            animPhase = 'intro';
+            phaseStart = now;
+            startTime = now;
+        }
+    } else if (animPhase === 'intro') {
+        if (config.intro === 'none') {
+            introProgress = 1;
+            animPhase = 'main';
+            phaseStart = now;
+        } else {
+            introProgress = Math.min(1, elapsed / Math.max(0.1, config.introDur));
+            if (introProgress >= 1) {
+                introProgress = 1;
+                animPhase = 'main';
+                phaseStart = now;
+            }
+        }
+    } else if (animPhase === 'main') {
+        introProgress = 1;
+        outroProgress = 0;
+        if (elapsed >= config.mainDur) {
+            if (config.outro === 'none') {
+                resetAnimation(now);
+            } else {
+                animPhase = 'outro';
+                phaseStart = now;
+            }
+        }
+    } else if (animPhase === 'outro') {
+        if (config.outro === 'none') {
+            resetAnimation(now);
+        } else {
+            outroProgress = Math.min(1, elapsed / Math.max(0.1, config.outroDur));
+            if (outroProgress >= 1) {
+                resetAnimation(now);
+            }
+        }
+    }
+}
+
+function animate() {
+    const now = Date.now();
+    advancePhase(now);
+    renderScene(now);
+    animFrameId = requestAnimationFrame(animate);
+}
+
+function applyGlitchPostProcess(progress, isSlam) {
+    const baseIntensity = Math.pow(1 - progress, 2);
+    const intensity = isSlam ? Math.min(1, baseIntensity * 2.5) : baseIntensity;
     if (intensity < 0.01) return;
+
+    const gc = config.glitchColor || '#ff0040';
+    const gR = parseInt(gc.slice(1, 3), 16);
+    const gG = parseInt(gc.slice(3, 5), 16);
+    const gB = parseInt(gc.slice(5, 7), 16);
 
     const imgData = ctx.getImageData(0, 0, width, height);
 
-    const rgbShift = Math.floor(intensity * 15 + Math.random() * intensity * 10);
+    // RGB channel shift — more aggressive for slam
+    const rgbShift = Math.floor(intensity * (isSlam ? 30 : 15) + Math.random() * intensity * (isSlam ? 20 : 10));
     if (rgbShift > 0) {
         const copy = new Uint8ClampedArray(imgData.data);
         for (let y = 0; y < height; y++) {
@@ -838,11 +968,12 @@ function applyGlitchPostProcess(progress) {
         }
     }
 
-    const numSlices = Math.floor(intensity * 8 + Math.random() * 6);
+    // Horizontal slice displacement — bigger & more slices for slam
+    const numSlices = Math.floor(intensity * (isSlam ? 15 : 8) + Math.random() * (isSlam ? 10 : 6));
     for (let s = 0; s < numSlices; s++) {
         const sliceY = Math.floor(Math.random() * height);
-        const sliceH = Math.floor(Math.random() * 20 * intensity + 2);
-        const shift = Math.floor((Math.random() - 0.5) * intensity * 80);
+        const sliceH = Math.floor(Math.random() * (isSlam ? 40 : 20) * intensity + 2);
+        const shift = Math.floor((Math.random() - 0.5) * intensity * (isSlam ? 160 : 80));
         if (Math.abs(shift) < 1) continue;
         for (let y = sliceY; y < Math.min(height, sliceY + sliceH); y++) {
             const rowStart = y * width * 4;
@@ -862,8 +993,29 @@ function applyGlitchPostProcess(progress) {
         }
     }
 
-    const scanOpacity = intensity * 0.3;
-    for (let y = 0; y < height; y += 3) {
+    // Colored glitch blocks — Watch Dogs / Cyberpunk style
+    if (isSlam && intensity > 0.1) {
+        const blockCount = Math.floor(intensity * 12 + Math.random() * 8);
+        for (let b = 0; b < blockCount; b++) {
+            const bx = Math.floor(Math.random() * width);
+            const by = Math.floor(Math.random() * height);
+            const bw = Math.floor(Math.random() * 80 * intensity + 10);
+            const bh = Math.floor(Math.random() * 12 * intensity + 2);
+            const alpha = intensity * (0.3 + Math.random() * 0.5);
+            for (let py = by; py < Math.min(height, by + bh); py++) {
+                for (let px = bx; px < Math.min(width, bx + bw); px++) {
+                    const idx = (py * width + px) * 4;
+                    imgData.data[idx] = Math.floor(imgData.data[idx] * (1 - alpha) + gR * alpha);
+                    imgData.data[idx + 1] = Math.floor(imgData.data[idx + 1] * (1 - alpha) + gG * alpha);
+                    imgData.data[idx + 2] = Math.floor(imgData.data[idx + 2] * (1 - alpha) + gB * alpha);
+                }
+            }
+        }
+    }
+
+    // Scanlines
+    const scanOpacity = intensity * (isSlam ? 0.5 : 0.3);
+    for (let y = 0; y < height; y += (isSlam ? 2 : 3)) {
         for (let x = 0; x < width; x++) {
             const idx = (y * width + x) * 4;
             imgData.data[idx] = Math.floor(imgData.data[idx] * (1 - scanOpacity));
@@ -874,13 +1026,24 @@ function applyGlitchPostProcess(progress) {
 
     ctx.putImageData(imgData, 0, 0);
 
-    if (Math.random() < intensity * 0.6) {
+    // Colored flash lines
+    const flashChance = isSlam ? 0.8 : 0.6;
+    if (Math.random() < intensity * flashChance) {
         ctx.save();
-        ctx.globalAlpha = intensity * 0.15;
-        ctx.fillStyle = '#ffffff';
+        ctx.globalAlpha = intensity * (isSlam ? 0.35 : 0.15);
+        ctx.fillStyle = gc;
         const lineY = Math.floor(Math.random() * height);
-        const lineH = Math.floor(Math.random() * 4 + 1);
+        const lineH = Math.floor(Math.random() * (isSlam ? 8 : 4) + 1);
         ctx.fillRect(0, lineY, width, lineH);
+        ctx.restore();
+    }
+
+    // Full-screen color flash on high intensity
+    if (isSlam && intensity > 0.5 && Math.random() < 0.3) {
+        ctx.save();
+        ctx.globalAlpha = intensity * 0.1;
+        ctx.fillStyle = gc;
+        ctx.fillRect(0, 0, width, height);
         ctx.restore();
     }
 }
@@ -905,26 +1068,26 @@ function drawTextSegment(startX, endX, targetY, ease, time, startIndex, rowIndex
             const seed = rowIndex * 1000 + Math.abs(charIndex);
             let drawX = currentX, drawY = targetY;
 
-            if (config.intro === 'explosion') {
+            if (currentAnimType === 'explosion') {
                 const nX = Math.sin(seed * 12.9898) * 43758.5453, rDX = (nX - Math.floor(nX) - 0.5) * 2.5;
                 const nY = Math.sin(seed * 78.233) * 23421.134, rDY = (nY - Math.floor(nY)) * -1.2;
                 const sp = 800, ctX = centerX + rDX * sp, ctY = centerY + rDY * sp - 100;
                 const t = ease, t1 = 1 - t;
                 drawX = t1 * t1 * centerX + 2 * t1 * t * ctX + t * t * currentX;
                 drawY = t1 * t1 * centerY + 2 * t1 * t * ctY + t * t * targetY;
-            } else if (config.intro === 'tape') {
+            } else if (currentAnimType === 'tape') {
                 drawX = currentX + (1 - ease) * (-width);
                 drawY = targetY + Math.sin(currentX * 0.01 + ease * 10) * (1 - ease) * 200;
-            } else if (config.intro === 'drop') {
+            } else if (currentAnimType === 'drop') {
                 drawY = targetY - Math.pow(1 - ease, 2) * (height + 200);
-            } else if (config.intro === 'spin') {
+            } else if (currentAnimType === 'spin') {
                 const dx = currentX - centerX, dy = targetY - centerY;
                 const dist = Math.sqrt(dx * dx + dy * dy);
                 const angle = Math.atan2(dy, dx) + (1 - ease) * 10;
                 const radius = dist + Math.pow(1 - ease, 3) * 1000;
                 drawX = centerX + Math.cos(angle) * radius;
                 drawY = centerY + Math.sin(angle) * radius;
-            } else if (config.intro === 'glitch') {
+            } else if (currentAnimType === 'glitch') {
                 const glitchIntensity = Math.pow(1 - ease, 2);
                 const band = Math.floor(targetY / 30);
                 const bandSeed = Math.sin(band * 45.17 + Math.floor(time * 8)) * 9999;
@@ -937,6 +1100,57 @@ function drawTextSegment(startX, endX, targetY, ease, time, startIndex, rowIndex
                     charIndex++;
                     continue;
                 }
+            } else if (currentAnimType === 'glitch-slam') {
+                // Cinematic glitch slam: short flash → blackout → bigger flash → blackout → full slam
+                // Timeline on ease 0→1:
+                // 0.00-0.08: quick flash (tiny peek)
+                // 0.08-0.20: blackout with scattered artifacts
+                // 0.20-0.38: bigger flash with heavy distortion
+                // 0.38-0.50: blackout with RGB bugs
+                // 0.50-0.72: full slam in with medium glitch
+                // 0.72-0.85: settling with light jitter
+                // 0.85-1.00: clean
+                if (ease < 0.08) {
+                    // Quick flash — only show ~30% of chars with huge offset
+                    if (Math.random() > 0.3) { currentX += charW; charIndex++; continue; }
+                    drawX = currentX + (Math.random() - 0.5) * 200;
+                    drawY = targetY + (Math.random() - 0.5) * 60;
+                } else if (ease < 0.20) {
+                    // Blackout — almost nothing, just scattered artifact chars
+                    if (Math.random() > 0.05) { currentX += charW; charIndex++; continue; }
+                    drawX = currentX + (Math.random() - 0.5) * 300;
+                    drawY = targetY + (Math.random() - 0.5) * 100;
+                } else if (ease < 0.38) {
+                    // Bigger flash — show ~60% of chars, heavy horizontal bands
+                    const localE = (ease - 0.20) / 0.18;
+                    if (Math.random() > 0.4 + localE * 0.2) { currentX += charW; charIndex++; continue; }
+                    const band = Math.floor(targetY / 15);
+                    const bs = Math.sin(band * 89.3 + Math.floor(time * 20)) * 9999;
+                    drawX = currentX + (bs - Math.floor(bs) - 0.5) * 150 * (1 - localE * 0.5);
+                    drawY = targetY + Math.sin(seed * 53.7 + Math.floor(time * 15)) * 25 * (1 - localE);
+                } else if (ease < 0.50) {
+                    // Second blackout — scattered RGB artifacts only
+                    if (Math.random() > 0.08) { currentX += charW; charIndex++; continue; }
+                    drawX = currentX + (Math.random() - 0.5) * 250;
+                    drawY = targetY + (Math.random() - 0.5) * 80;
+                } else if (ease < 0.72) {
+                    // Full slam — text mostly visible, medium distortion
+                    const localE = (ease - 0.50) / 0.22;
+                    const gI = Math.pow(1 - localE, 2);
+                    if (Math.random() < gI * 0.15) { currentX += charW; charIndex++; continue; }
+                    const band = Math.floor(targetY / 25);
+                    const bs = Math.sin(band * 37.9 + Math.floor(time * 12)) * 9999;
+                    drawX = currentX + (bs - Math.floor(bs) - 0.5) * gI * 80;
+                    drawY = targetY + Math.sin(seed * 29.3 + Math.floor(time * 10)) * gI * 18;
+                } else if (ease < 0.85) {
+                    // Settling — light jitter
+                    const gI = Math.pow((0.85 - ease) / 0.13, 2) * 0.3;
+                    const band = Math.floor(targetY / 40);
+                    const bs = Math.sin(band * 19.7 + Math.floor(time * 8)) * 9999;
+                    drawX = currentX + (bs - Math.floor(bs) - 0.5) * gI * 30;
+                    drawY = targetY + Math.sin(seed * 17.1 + time * 6) * gI * 6;
+                }
+                // 0.85-1.0: clean, drawX/drawY stay at currentX/targetY
             }
 
             let idleX = 0, idleY = 0;
@@ -1006,6 +1220,7 @@ const exportCode = document.getElementById('exportCode');
 document.getElementById('exportOpenBtn').addEventListener('click', () => {
     exportCode.value = generateExportHTML();
     exportModal.classList.add('active');
+    if (typeof updateRecInfo === 'function') updateRecInfo();
 });
 document.getElementById('modalClose').addEventListener('click', () => exportModal.classList.remove('active'));
 exportModal.addEventListener('click', e => { if (e.target === exportModal) exportModal.classList.remove('active'); });
@@ -1044,11 +1259,31 @@ fetch('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js')
     })
     .catch(() => { console.warn('gif.worker.js preload failed, will retry on export'); });
 
+// Toggle GIF scale vs video quality + update info
+function updateRecInfo() {
+    const format = document.getElementById('recFormat').value;
+    const isGif = format === 'gif';
+    document.getElementById('grpQuality').style.display = isGif ? 'none' : '';
+    document.getElementById('grpScale').style.display = isGif ? '' : 'none';
+    const duration = parseFloat(document.getElementById('recDuration').value) || 5;
+    const fps = parseInt(document.getElementById('recFps').value) || 30;
+    const totalFrames = Math.round(duration * fps);
+    const cycleDur = getTotalCycleDur();
+    const cycles = (duration / cycleDur).toFixed(1);
+    document.getElementById('recInfo').textContent =
+        `${totalFrames} кадров | ${fps} FPS | ${duration}с | ~${cycles} циклов (цикл ${cycleDur.toFixed(1)}с)`;
+}
+document.getElementById('recFormat').addEventListener('change', updateRecInfo);
+document.getElementById('recDuration').addEventListener('input', updateRecInfo);
+document.getElementById('recFps').addEventListener('change', updateRecInfo);
+
 document.getElementById('gifBtn').addEventListener('click', async () => {
     const gifBtn = document.getElementById('gifBtn');
     if (gifBtn.disabled) return;
     gifBtn.disabled = true;
 
+    const format = document.getElementById('recFormat').value;
+    const quality = document.getElementById('recQuality').value;
     const progressArea = document.getElementById('gifProgressArea');
     const progressFill = document.getElementById('gifProgressFill');
     const progressText = document.getElementById('gifProgressText');
@@ -1058,97 +1293,293 @@ document.getElementById('gifBtn').addEventListener('click', async () => {
 
     exportModal.classList.remove('active');
 
-    if (!gifWorkerUrl) {
-        try {
-            const code = await fetch('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js').then(r => r.text());
-            gifWorkerUrl = URL.createObjectURL(new Blob([code], { type: 'application/javascript' }));
-        } catch (e) {
-            alert('Не удалось загрузить gif.worker.js. Проверьте интернет-соединение.');
-            gifBtn.disabled = false;
-            progressArea.style.display = 'none';
-            return;
-        }
+    const duration = parseFloat(document.getElementById('recDuration').value) || 5;
+    const fps = parseInt(document.getElementById('recFps').value) || 30;
+    const totalFrames = Math.round(duration * fps);
+    const delay = Math.round(1000 / fps); // ms per frame
+
+    // Save mouse and stop live loop
+    const savedMouse = { x: mouse.x, y: mouse.y };
+    mouse.x = -9999; mouse.y = -9999;
+    cancelAnimationFrame(animFrameId);
+
+    function reopenModal() {
+        exportModal.classList.add('active');
+        document.querySelectorAll('.export-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.export-tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelector('.export-tab[data-tab="gif"]').classList.add('active');
+        document.getElementById('tabGif').classList.add('active');
     }
 
-    const duration = parseFloat(document.getElementById('gifDuration').value) || 3;
-    const fps = parseInt(document.getElementById('gifFps').value) || 20;
-    const scale = parseFloat(document.getElementById('gifScale').value) || 1;
-    const totalFrames = Math.round(duration * fps);
-    const delay = Math.round(1000 / fps);
+    function restoreAndFinish(message) {
+        mouse.x = savedMouse.x; mouse.y = savedMouse.y;
+        resetAnimation();
+        animate();
+        reopenModal();
+        progressFill.style.width = '100%';
+        progressText.textContent = message;
+        gifBtn.disabled = false;
+        setTimeout(() => { progressArea.style.display = 'none'; }, 2500);
+    }
 
-    const gifW = Math.round(canvas.width * scale);
-    const gifH = Math.round(canvas.height * scale);
+    // === Virtual-time frame-by-frame rendering ===
+    const virtualStart = Date.now();
+    resetAnimation(virtualStart);
+
+    const srcW = canvas.width, srcH = canvas.height;
+    const gifScale = format === 'gif' ? parseFloat(document.getElementById('recScale').value) || 0.5 : 1;
+    const outW = Math.round(srcW * gifScale);
+    const outH = Math.round(srcH * gifScale);
 
     const offCanvas = document.createElement('canvas');
-    offCanvas.width = gifW;
-    offCanvas.height = gifH;
+    offCanvas.width = outW;
+    offCanvas.height = outH;
     const offCtx2 = offCanvas.getContext('2d');
 
     const frames = [];
-    let framesCaptured = 0;
-
-    await new Promise(r => setTimeout(r, 100));
-
-    function captureFrame() {
-        return new Promise(resolve => {
-            requestAnimationFrame(() => {
-                offCtx2.clearRect(0, 0, gifW, gifH);
-                offCtx2.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, gifW, gifH);
-                frames.push(offCtx2.getImageData(0, 0, gifW, gifH));
-                framesCaptured++;
-                resolve();
-            });
-        });
-    }
+    progressText.textContent = 'Рендер кадров...';
 
     for (let i = 0; i < totalFrames; i++) {
-        await captureFrame();
-        if (i < totalFrames - 1) await new Promise(r => setTimeout(r, delay));
+        const virtualNow = virtualStart + i * delay;
+        advancePhase(virtualNow);
+        renderScene(virtualNow);
+
+        offCtx2.clearRect(0, 0, outW, outH);
+        offCtx2.drawImage(canvas, 0, 0, outW, outH);
+        frames.push(offCtx2.getImageData(0, 0, outW, outH));
+
+        if (i % 5 === 0) {
+            const pct = Math.round(((i + 1) / totalFrames) * 35);
+            progressFill.style.width = pct + '%';
+            progressText.textContent = `Рендер: ${i + 1}/${totalFrames}`;
+            await new Promise(r => setTimeout(r, 0));
+        }
     }
 
-    exportModal.classList.add('active');
-    document.querySelectorAll('.export-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.export-tab-content').forEach(c => c.classList.remove('active'));
-    document.querySelector('.export-tab[data-tab="gif"]').classList.add('active');
-    document.getElementById('tabGif').classList.add('active');
-
-    progressArea.style.display = 'block';
-    progressText.textContent = 'Кодирование GIF...';
     progressFill.style.width = '40%';
 
-    const gif = new GIF({
-        workers: navigator.hardwareConcurrency || 4,
-        workerScript: gifWorkerUrl,
-        width: gifW,
-        height: gifH,
-        quality: 5,
-        repeat: 0
-    });
+    if (format === 'gif') {
+        // === GIF ENCODING ===
+        if (!gifWorkerUrl) {
+            try {
+                const code = await fetch('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js').then(r => r.text());
+                gifWorkerUrl = URL.createObjectURL(new Blob([code], { type: 'application/javascript' }));
+            } catch (e) {
+                alert('Не удалось загрузить gif.worker.js.');
+                restoreAndFinish('Ошибка загрузки воркера');
+                return;
+            }
+        }
 
-    for (let i = 0; i < frames.length; i++) {
-        gif.addFrame(frames[i], { delay: delay });
-    }
+        reopenModal();
+        progressArea.style.display = 'block';
+        progressText.textContent = 'Кодирование GIF...';
 
-    gif.on('progress', p => {
-        const pct = 40 + Math.round(p * 60);
-        progressFill.style.width = pct + '%';
-        progressText.textContent = `Кодирование: ${Math.round(p * 100)}%`;
-    });
+        const gif = new GIF({
+            workers: navigator.hardwareConcurrency || 4,
+            workerScript: gifWorkerUrl,
+            width: outW, height: outH,
+            quality: 10, repeat: 0
+        });
 
-    gif.on('finished', blob => {
+        for (let i = 0; i < frames.length; i++) {
+            gif.addFrame(frames[i], { delay: delay });
+        }
+
+        gif.on('progress', p => {
+            const pct = 40 + Math.round(p * 60);
+            progressFill.style.width = pct + '%';
+            progressText.textContent = `Кодирование: ${Math.round(p * 100)}%`;
+        });
+
+        gif.on('finished', blob => {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'pretext-animation.gif';
+            a.click();
+            URL.revokeObjectURL(a.href);
+            frames.length = 0;
+            restoreAndFinish('Готово! GIF скачан.');
+        });
+
+        gif.render();
+
+    } else if (format === 'mp4') {
+        // === MP4 ENCODING via WebCodecs + mp4-muxer ===
+        reopenModal();
+        progressArea.style.display = 'block';
+
+        if (typeof VideoEncoder === 'undefined') {
+            alert('Ваш браузер не поддерживает WebCodecs (нужен Chrome/Edge 94+). Попробуйте WebM.');
+            restoreAndFinish('WebCodecs не поддерживается');
+            return;
+        }
+
+        progressText.textContent = 'Загрузка MP4 кодировщика...';
+
+        let Mp4Muxer;
+        const cdnUrls = [
+            'https://cdn.jsdelivr.net/npm/mp4-muxer@5/build/mp4-muxer.min.mjs',
+            'https://cdn.jsdelivr.net/npm/mp4-muxer@5/+esm',
+            'https://esm.sh/mp4-muxer@5'
+        ];
+        for (const url of cdnUrls) {
+            try { Mp4Muxer = await import(url); break; }
+            catch (e) { console.warn('mp4-muxer load failed from', url, e); }
+        }
+        if (!Mp4Muxer) {
+            alert('Не удалось загрузить mp4-muxer. Проверьте интернет или попробуйте WebM/GIF.');
+            restoreAndFinish('Ошибка загрузки mp4-muxer');
+            return;
+        }
+
+        // H264 requires even dimensions
+        const encW = outW % 2 === 0 ? outW : outW + 1;
+        const encH = outH % 2 === 0 ? outH : outH + 1;
+
+        const vidCanvas = document.createElement('canvas');
+        vidCanvas.width = encW;
+        vidCanvas.height = encH;
+        const vidCtx2 = vidCanvas.getContext('2d');
+
+        const bpsMap = { medium: 5000000, high: 10000000, max: 20000000 };
+        const bitrate = bpsMap[quality] || 10000000;
+
+        const muxer = new Mp4Muxer.Muxer({
+            target: new Mp4Muxer.ArrayBufferTarget(),
+            video: {
+                codec: 'avc',
+                width: encW,
+                height: encH
+            },
+            fastStart: 'in-memory'
+        });
+
+        let encoderError = null;
+        const encoder = new VideoEncoder({
+            output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
+            error: e => { encoderError = e; console.error('VideoEncoder error:', e); }
+        });
+
+        // Try High profile, then Main, then Baseline
+        const codecsToTry = ['avc1.640028', 'avc1.4d0028', 'avc1.42001f'];
+        let configured = false;
+        for (const codecStr of codecsToTry) {
+            try {
+                const testCfg = { codec: codecStr, width: encW, height: encH, bitrate, framerate: fps };
+                const support = await VideoEncoder.isConfigSupported(testCfg);
+                if (support.supported) {
+                    encoder.configure(testCfg);
+                    configured = true;
+                    break;
+                }
+            } catch (e) { continue; }
+        }
+        if (!configured) {
+            alert('H264 кодек не поддерживается. Попробуйте WebM.');
+            restoreAndFinish('H264 не поддерживается');
+            return;
+        }
+
+        const frameDurationUs = Math.round(1000000 / fps);
+        progressText.textContent = 'Кодирование MP4...';
+
+        for (let i = 0; i < frames.length; i++) {
+            if (encoderError) break;
+
+            vidCtx2.fillStyle = config.bgColor;
+            vidCtx2.fillRect(0, 0, encW, encH);
+            vidCtx2.putImageData(frames[i], 0, 0);
+
+            const vf = new VideoFrame(vidCanvas, {
+                timestamp: i * frameDurationUs,
+                duration: frameDurationUs
+            });
+            encoder.encode(vf, { keyFrame: i % (fps * 2) === 0 });
+            vf.close();
+
+            if (i % 10 === 0) {
+                const pct = 40 + Math.round(((i + 1) / frames.length) * 55);
+                progressFill.style.width = pct + '%';
+                progressText.textContent = `MP4: ${i + 1}/${frames.length}`;
+                await new Promise(r => setTimeout(r, 0));
+            }
+        }
+
+        if (encoderError) {
+            restoreAndFinish('Ошибка кодирования: ' + encoderError.message);
+            return;
+        }
+
+        await encoder.flush();
+        encoder.close();
+        muxer.finalize();
+
+        const buf = muxer.target.buffer;
+        const blob = new Blob([buf], { type: 'video/mp4' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = 'pretext-animation.gif';
+        a.download = 'pretext-animation.mp4';
         a.click();
         URL.revokeObjectURL(a.href);
-        gifBtn.disabled = false;
         frames.length = 0;
-        progressText.textContent = 'Готово! GIF скачан.';
-        progressFill.style.width = '100%';
-        setTimeout(() => { progressArea.style.display = 'none'; }, 2000);
-    });
 
-    gif.render();
+        restoreAndFinish('Готово! MP4 скачано.');
+
+    } else {
+        // === WEBM ENCODING via MediaRecorder ===
+        progressText.textContent = 'Кодирование видео...';
+        reopenModal();
+        progressArea.style.display = 'block';
+
+        const vidCanvas = document.createElement('canvas');
+        vidCanvas.width = outW;
+        vidCanvas.height = outH;
+        const vidCtx2 = vidCanvas.getContext('2d');
+
+        const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+            ? 'video/webm;codecs=vp9' : 'video/webm;codecs=vp8';
+
+        const bpsMap = { medium: 5000000, high: 10000000, max: 20000000 };
+        const stream = vidCanvas.captureStream(0);
+        const recorder = new MediaRecorder(stream, {
+            mimeType: mimeType,
+            videoBitsPerSecond: bpsMap[quality] || 10000000
+        });
+        const chunks = [];
+        recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+
+        recorder.start();
+
+        const track = stream.getVideoTracks()[0];
+        for (let i = 0; i < frames.length; i++) {
+            vidCtx2.putImageData(frames[i], 0, 0);
+            if (track.requestFrame) {
+                track.requestFrame();
+            }
+            // Small yield to let MediaRecorder process the frame
+            await new Promise(r => setTimeout(r, 16));
+
+            if (i % 10 === 0) {
+                const pct = 40 + Math.round(((i + 1) / frames.length) * 55);
+                progressFill.style.width = pct + '%';
+                progressText.textContent = `WebM: ${i + 1}/${frames.length}`;
+            }
+        }
+
+        recorder.stop();
+        await new Promise(r => { recorder.onstop = r; });
+
+        const blob = new Blob(chunks, { type: mimeType });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'pretext-animation.webm';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        frames.length = 0;
+
+        restoreAndFinish('Готово! WebM скачано.');
+    }
 });
 
 function getImageBase64(img) {
@@ -1172,10 +1603,13 @@ function generateExportHTML() {
     const cfgStr = JSON.stringify({
         mask: config.mask, mask2: config.mask2, fillText: config.fillText || 'SEVERYAN',
         fontMask: config.fontMask, fontFill: config.fontFill, layout: config.layout,
-        intro: config.intro, idle: config.idle, mouseFX: config.mouseFX,
+        intro: config.intro, idle: config.idle, outro: config.outro, mouseFX: config.mouseFX,
         scale: config.scale, scale2: config.scale2,
-        introSpeed: config.introSpeed, speedX: config.speedX, speedY: config.speedY,
+        introDur: config.introDur, mainDur: config.mainDur, outroDur: config.outroDur,
+        introReverse: config.introReverse, outroReverse: config.outroReverse,
+        speedX: config.speedX, speedY: config.speedY,
         bgColor: bg, textColor: fg, fillSize: config.fillSize,
+        glitchColor: config.glitchColor,
         mouseRadius: config.mouseRadius, mouseForce: config.mouseForce,
         videoThreshold: config.videoThreshold, objPadding: config.objPadding,
         imgData: imgB64, videoData: vidB64, objects: objsData
@@ -1201,9 +1635,11 @@ var cfg = ${cfgStr};
 var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext("2d", { willReadFrequently: true });
 var W, H, maskI = [], clipP = null, cW = {}, LH = Math.round((cfg.fillSize || 14) * 1.15), bbX1 = 0, bbX2 = 0;
-var startT = Date.now(), introP = 0;
+var startT = Date.now(), introP = 0, outroP = 0;
+var animPh = "intro", phStart = Date.now(), curAT = cfg.intro;
 var mouse = { x: -1000, y: -1000, radius: cfg.mouseRadius };
 var scObjs = [], objM = null;
+function resetAnim(n) { var t = n || Date.now(); animPh = "intro"; introP = 0; outroP = 0; phStart = t; startT = t; }
 
 canvas.addEventListener("mousemove", function(e) {
     var r = canvas.getBoundingClientRect(); mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top;
@@ -1342,53 +1778,73 @@ function createMask() {
 }
 
 var lastVidRebuild = 0;
-function applyGlitchPP(progress) {
-    var intensity = Math.pow(1 - progress, 2);
+function applyGlitchPP(progress, isSlam) {
+    var bI = Math.pow(1 - progress, 2), intensity = isSlam ? Math.min(1, bI * 2.5) : bI;
     if (intensity < 0.01) return;
+    var gc = cfg.glitchColor || "#ff0040";
+    var gR = parseInt(gc.slice(1,3),16), gG = parseInt(gc.slice(3,5),16), gB = parseInt(gc.slice(5,7),16);
     var imgData = ctx.getImageData(0, 0, W, H);
-    var rgbS = Math.floor(intensity * 15 + Math.random() * intensity * 10);
-    if (rgbS > 0) {
-        var cp = new Uint8ClampedArray(imgData.data);
-        for (var y = 0; y < H; y++) { for (var x = 0; x < W; x++) {
-            var idx = (y * W + x) * 4;
-            var sR = Math.min(W - 1, x + rgbS); imgData.data[idx] = cp[(y * W + sR) * 4];
-            var sB = Math.max(0, x - rgbS); imgData.data[idx + 2] = cp[(y * W + sB) * 4 + 2];
-        } }
-    }
-    var nS = Math.floor(intensity * 8 + Math.random() * 6);
-    for (var s = 0; s < nS; s++) {
-        var sY = Math.floor(Math.random() * H), sH = Math.floor(Math.random() * 20 * intensity + 2);
-        var sh = Math.floor((Math.random() - 0.5) * intensity * 80);
-        if (Math.abs(sh) < 1) continue;
-        for (var y = sY; y < Math.min(H, sY + sH); y++) {
-            var rS = y * W * 4, rC = new Uint8ClampedArray(W * 4);
-            rC.set(imgData.data.subarray(rS, rS + W * 4));
-            for (var x = 0; x < W; x++) { var srcX = x - sh, di = rS + x * 4;
-                if (srcX >= 0 && srcX < W) { var si2 = srcX * 4; imgData.data[di]=rC[si2]; imgData.data[di+1]=rC[si2+1]; imgData.data[di+2]=rC[si2+2]; imgData.data[di+3]=rC[si2+3]; } } } }
-    var scO = intensity * 0.3;
-    for (var y = 0; y < H; y += 3) { for (var x = 0; x < W; x++) { var idx = (y*W+x)*4;
-        imgData.data[idx]=Math.floor(imgData.data[idx]*(1-scO)); imgData.data[idx+1]=Math.floor(imgData.data[idx+1]*(1-scO)); imgData.data[idx+2]=Math.floor(imgData.data[idx+2]*(1-scO)); } }
+    var rgbS = Math.floor(intensity * (isSlam?30:15) + Math.random() * intensity * (isSlam?20:10));
+    if (rgbS > 0) { var cp = new Uint8ClampedArray(imgData.data);
+        for (var y = 0; y < H; y++) { for (var x = 0; x < W; x++) { var idx = (y*W+x)*4;
+            imgData.data[idx] = cp[(y*W+Math.min(W-1,x+rgbS))*4];
+            imgData.data[idx+2] = cp[(y*W+Math.max(0,x-rgbS))*4+2]; } } }
+    var nS = Math.floor(intensity*(isSlam?15:8)+Math.random()*(isSlam?10:6));
+    for (var s = 0; s < nS; s++) { var sY=Math.floor(Math.random()*H), sH2=Math.floor(Math.random()*(isSlam?40:20)*intensity+2);
+        var sh=Math.floor((Math.random()-0.5)*intensity*(isSlam?160:80)); if(Math.abs(sh)<1)continue;
+        for(var y=sY;y<Math.min(H,sY+sH2);y++){var rS=y*W*4,rC=new Uint8ClampedArray(W*4);rC.set(imgData.data.subarray(rS,rS+W*4));
+        for(var x=0;x<W;x++){var srcX=x-sh,di=rS+x*4;if(srcX>=0&&srcX<W){var si2=srcX*4;imgData.data[di]=rC[si2];imgData.data[di+1]=rC[si2+1];imgData.data[di+2]=rC[si2+2];imgData.data[di+3]=rC[si2+3];}}}}
+    if(isSlam&&intensity>0.1){var bc=Math.floor(intensity*12+Math.random()*8);
+        for(var b=0;b<bc;b++){var bx=Math.floor(Math.random()*W),by=Math.floor(Math.random()*H),bw=Math.floor(Math.random()*80*intensity+10),bh=Math.floor(Math.random()*12*intensity+2),al=intensity*(0.3+Math.random()*0.5);
+        for(var py=by;py<Math.min(H,by+bh);py++){for(var px=bx;px<Math.min(W,bx+bw);px++){var idx=(py*W+px)*4;imgData.data[idx]=Math.floor(imgData.data[idx]*(1-al)+gR*al);imgData.data[idx+1]=Math.floor(imgData.data[idx+1]*(1-al)+gG*al);imgData.data[idx+2]=Math.floor(imgData.data[idx+2]*(1-al)+gB*al);}}}}
+    var scO=intensity*(isSlam?0.5:0.3),step=isSlam?2:3;
+    for(var y=0;y<H;y+=step){for(var x=0;x<W;x++){var idx=(y*W+x)*4;imgData.data[idx]=Math.floor(imgData.data[idx]*(1-scO));imgData.data[idx+1]=Math.floor(imgData.data[idx+1]*(1-scO));imgData.data[idx+2]=Math.floor(imgData.data[idx+2]*(1-scO));}}
     ctx.putImageData(imgData, 0, 0);
-    if (Math.random() < intensity * 0.6) { ctx.save(); ctx.globalAlpha = intensity * 0.15; ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, Math.floor(Math.random()*H), W, Math.floor(Math.random()*4+1)); ctx.restore(); }
+    if(Math.random()<intensity*(isSlam?0.8:0.6)){ctx.save();ctx.globalAlpha=intensity*(isSlam?0.35:0.15);ctx.fillStyle=gc;ctx.fillRect(0,Math.floor(Math.random()*H),W,Math.floor(Math.random()*(isSlam?8:4)+1));ctx.restore();}
+    if(isSlam&&intensity>0.5&&Math.random()<0.3){ctx.save();ctx.globalAlpha=intensity*0.1;ctx.fillStyle=gc;ctx.fillRect(0,0,W,H);ctx.restore();}
+}
+function advPh(now) {
+    var el = (now - phStart) / 1000;
+    if (animPh === "intro") {
+        if (cfg.intro === "none") { introP = 1; animPh = "main"; phStart = now; }
+        else { introP = Math.min(1, el / Math.max(0.1, cfg.introDur || 2));
+            if (introP >= 1) { introP = 1; animPh = "main"; phStart = now; } }
+    } else if (animPh === "main") { introP = 1; outroP = 0;
+        if (el >= (cfg.mainDur || 3)) {
+            if ((cfg.outro || "none") === "none") resetAnim(now);
+            else { animPh = "outro"; phStart = now; } }
+    } else if (animPh === "outro") {
+        if ((cfg.outro || "none") === "none") { resetAnim(now); }
+        else { outroP = Math.min(1, el / Math.max(0.1, cfg.outroDur || 2));
+            if (outroP >= 1) resetAnim(now); }
+    }
 }
 function animate() {
+    var now = Date.now();
+    advPh(now);
     ctx.fillStyle = cfg.bgColor || "#ffffff";
     ctx.fillRect(0, 0, W, H);
     if (cfg.layout === "video" && vidReady) {
-        var now = Date.now();
         if (now - lastVidRebuild > 66) { lastVidRebuild = now; createMask(); }
     }
-    var introSM = cfg.introSpeed / 100;
-    if (cfg.intro === "none") introP = 1;
-    else if (introP < 1) { introP += 0.008 * introSM; if (introP >= 1) introP = 1; }
+    var ease;
+    if (animPh === "intro") {
+        curAT = cfg.intro;
+        var rP = cfg.introReverse ? 1 - introP : introP;
+        ease = 1 - Math.pow(1 - rP, 3);
+        ctx.globalAlpha = (cfg.intro === "fade") ? rP : 1;
+        if ((cfg.intro === "glitch" || cfg.intro === "glitch-slam") && introP < 1) ctx.globalAlpha = Math.min(1, rP * 2.5);
+    } else if (animPh === "outro") {
+        curAT = cfg.outro || "none";
+        if (cfg.outroReverse) { ease = 1 - Math.pow(1 - outroP, 3); ctx.globalAlpha = ((cfg.outro||"none")==="fade")?outroP:1; }
+        else { var oE = 1 - Math.pow(1 - outroP, 3); ease = 1 - oE; ctx.globalAlpha = ((cfg.outro||"none")==="fade")?(1-outroP):1; }
+        if ((curAT === "glitch" || curAT === "glitch-slam") && outroP < 1) ctx.globalAlpha = cfg.outroReverse ? Math.min(1,outroP*2.5) : Math.min(1,(1-outroP)*2.5);
+    } else { curAT = "none"; ease = 1; ctx.globalAlpha = 1; }
     ctx.font = "900 " + (cfg.fillSize || 14) + "px '" + cfg.fontFill + "', sans-serif"; ctx.textBaseline = "top";
-    ctx.globalAlpha = (cfg.intro === "fade") ? introP : 1;
-    if (cfg.intro === "glitch" && introP < 1) ctx.globalAlpha = Math.min(1, introP * 2.5);
-    var ease = 1 - Math.pow(1 - introP, 3), time = Date.now() * 0.0015;
-    var cOX = (Date.now() - startT) * 0.01 * (cfg.speedX / 15);
+    var time = now * 0.0015;
+    var cOX = (now - startT) * 0.01 * (cfg.speedX / 15);
     var yOff = 0, needClip = cfg.speedY !== 0 && clipP;
-    if (cfg.speedY !== 0) yOff = (Date.now() - startT) * 0.15 * (cfg.speedY / 15);
+    if (cfg.speedY !== 0) yOff = (now - startT) * 0.15 * (cfg.speedY / 15);
     if (needClip) { ctx.save(); ctx.clip(clipP); }
     var pH = maskI.length > 1 ? maskI[maskI.length-1].y - maskI[0].y + LH : H;
     if (pH <= 0) pH = H;
@@ -1424,7 +1880,12 @@ function animate() {
         }
     }
     if (needClip) ctx.restore();
-    if (cfg.intro === "glitch" && introP < 1) applyGlitchPP(introP);
+    var isGT = curAT === "glitch" || curAT === "glitch-slam";
+    if (isGT && ((animPh === "intro" && introP < 1) || (animPh === "outro" && outroP < 1))) {
+        var gp = animPh === "intro" ? introP : outroP;
+        var gDir = (animPh === "intro" && !cfg.introReverse) || (animPh === "outro" && cfg.outroReverse);
+        applyGlitchPP(gDir ? gp : (1 - gp), curAT === "glitch-slam");
+    }
     for (var oi = 0; oi < scObjs.length; oi++) { var ob = scObjs[oi]; ctx.drawImage(ob.img, ob.x, ob.y, ob.w, ob.h); }
     ctx.globalAlpha = 1;
     requestAnimationFrame(animate);
@@ -1439,15 +1900,15 @@ function drawSeg(sX, eX, tY, ease, time, sIdx, rIdx) {
         if (cX + chW > eX) break;
         if (ch !== " ") {
             var seed = rIdx * 1000 + Math.abs(cIdx), dX = cX, dY = tY;
-            if (cfg.intro === "explosion") {
+            if (curAT === "explosion") {
                 var nX = Math.sin(seed*12.9898)*43758.5453, rDX = (nX-Math.floor(nX)-0.5)*2.5;
                 var nY = Math.sin(seed*78.233)*23421.134, rDY = (nY-Math.floor(nY))*-1.2;
                 var sp = 800, ctX = cenX+rDX*sp, ctY = cenY+rDY*sp-100, t = ease, t1 = 1-t;
                 dX = t1*t1*cenX+2*t1*t*ctX+t*t*cX; dY = t1*t1*cenY+2*t1*t*ctY+t*t*tY;
-            } else if (cfg.intro === "tape") { dX = cX+(1-ease)*(-W); dY = tY+Math.sin(cX*0.01+ease*10)*(1-ease)*200;
-            } else if (cfg.intro === "drop") { dY = tY-Math.pow(1-ease,2)*(H+200);
-            } else if (cfg.intro === "spin") { var dx=cX-cenX,dy=tY-cenY,dist=Math.sqrt(dx*dx+dy*dy); var angle=Math.atan2(dy,dx)+(1-ease)*10,radius=dist+Math.pow(1-ease,3)*1000; dX=cenX+Math.cos(angle)*radius; dY=cenY+Math.sin(angle)*radius;
-            } else if (cfg.intro === "glitch") {
+            } else if (curAT === "tape") { dX = cX+(1-ease)*(-W); dY = tY+Math.sin(cX*0.01+ease*10)*(1-ease)*200;
+            } else if (curAT === "drop") { dY = tY-Math.pow(1-ease,2)*(H+200);
+            } else if (curAT === "spin") { var dx=cX-cenX,dy=tY-cenY,dist=Math.sqrt(dx*dx+dy*dy); var angle=Math.atan2(dy,dx)+(1-ease)*10,radius=dist+Math.pow(1-ease,3)*1000; dX=cenX+Math.cos(angle)*radius; dY=cenY+Math.sin(angle)*radius;
+            } else if (curAT === "glitch") {
                 var gI = Math.pow(1-ease,2), band = Math.floor(tY/30);
                 var bSeed = Math.sin(band*45.17+Math.floor(time*8))*9999;
                 var bShift = (bSeed-Math.floor(bSeed)-0.5)*2;
@@ -1455,6 +1916,13 @@ function drawSeg(sX, eX, tY, ease, time, sIdx, rIdx) {
                 var vJ = Math.sin(seed*33.33+Math.floor(time*12))*gI*15;
                 dY = tY + vJ;
                 if (Math.random() < gI*0.3) { cX += chW; cIdx++; continue; }
+            } else if (curAT === "glitch-slam") {
+                if(ease<0.08){if(Math.random()>0.3){cX+=chW;cIdx++;continue;}dX=cX+(Math.random()-0.5)*200;dY=tY+(Math.random()-0.5)*60;
+                }else if(ease<0.20){if(Math.random()>0.05){cX+=chW;cIdx++;continue;}dX=cX+(Math.random()-0.5)*300;dY=tY+(Math.random()-0.5)*100;
+                }else if(ease<0.38){var le=(ease-0.20)/0.18;if(Math.random()>0.4+le*0.2){cX+=chW;cIdx++;continue;}var bn=Math.floor(tY/15),bs3=Math.sin(bn*89.3+Math.floor(time*20))*9999;dX=cX+(bs3-Math.floor(bs3)-0.5)*150*(1-le*0.5);dY=tY+Math.sin(seed*53.7+Math.floor(time*15))*25*(1-le);
+                }else if(ease<0.50){if(Math.random()>0.08){cX+=chW;cIdx++;continue;}dX=cX+(Math.random()-0.5)*250;dY=tY+(Math.random()-0.5)*80;
+                }else if(ease<0.72){var le2=(ease-0.50)/0.22,gi3=Math.pow(1-le2,2);if(Math.random()<gi3*0.15){cX+=chW;cIdx++;continue;}var bn2=Math.floor(tY/25),bs4=Math.sin(bn2*37.9+Math.floor(time*12))*9999;dX=cX+(bs4-Math.floor(bs4)-0.5)*gi3*80;dY=tY+Math.sin(seed*29.3+Math.floor(time*10))*gi3*18;
+                }else if(ease<0.85){var gi4=Math.pow((0.85-ease)/0.13,2)*0.3,bn3=Math.floor(tY/40),bs5=Math.sin(bn3*19.7+Math.floor(time*8))*9999;dX=cX+(bs5-Math.floor(bs5)-0.5)*gi4*30;dY=tY+Math.sin(seed*17.1+time*6)*gi4*6;}
             }
             var iX=0,iY=0;
             if (cfg.idle==="wave") { iX=Math.cos(time+cX*0.01)*1.5*ease; iY=Math.sin(time+cX*0.015)*3*ease;
